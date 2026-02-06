@@ -1,7 +1,6 @@
+import { builtinManifestEntries } from "./adapters";
 import { getAdapter as _getAdapter } from "./registry";
 import { registerManifestAdapter } from "./manifest/manifest-registry";
-import { chatgptManifest, chatgptHooks } from "./adapters/chatgpt/manifest";
-import { claudeManifest, claudeHooks } from "./adapters/claude/manifest";
 
 export {
   registerAdapter,
@@ -21,29 +20,19 @@ export {
 } from "./base";
 export type { AdapterConfig, ConversationOptions, RawMessage } from "./base";
 
-export {
-  EXTENSION_SITE_CONFIGS,
-  EXTENSION_HOST_PERMISSIONS,
-  EXTENSION_CONTENT_MATCHES,
-  EXTENSION_HOST_PATTERNS,
-  getExtensionSiteByUrl,
-  getExtensionSiteByHost,
-  resolveExtensionTheme,
-  CHATGPT_EXT_SITE,
-  CLAUDE_EXT_SITE,
-} from "./extension-sites";
-export type {
-  ExtensionSiteConfig,
-  ExtensionSiteThemeTokens,
-} from "./extension-sites";
-
-export { chatgptManifest, chatgptHooks, claudeManifest, claudeHooks } from "./adapters";
+// 从 manifest entries 自动派生，不再需要 extension-sites.ts
+export const EXTENSION_HOST_PERMISSIONS = builtinManifestEntries.flatMap(
+  (e) => e.manifest.urls.hostPermissions,
+);
+export const EXTENSION_CONTENT_MATCHES = EXTENSION_HOST_PERMISSIONS;
+export const EXTENSION_HOST_PATTERNS = builtinManifestEntries.flatMap(
+  (e) => e.manifest.urls.hostPatterns,
+);
 
 export function registerBuiltinAdapters(): void {
-  if (!_getAdapter(chatgptManifest.id)) {
-    registerManifestAdapter({ manifest: chatgptManifest, hooks: chatgptHooks });
-  }
-  if (!_getAdapter(claudeManifest.id)) {
-    registerManifestAdapter({ manifest: claudeManifest, hooks: claudeHooks });
+  for (const entry of builtinManifestEntries) {
+    if (!_getAdapter(entry.manifest.id)) {
+      registerManifestAdapter(entry);
+    }
   }
 }

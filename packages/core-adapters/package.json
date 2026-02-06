@@ -14,18 +14,6 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./extension-sites": {
-      "types": "./src/extension-sites.ts",
-      "development": "./src/extension-sites.ts",
-      "import": "./src/extension-sites.ts",
-      "default": "./src/extension-sites.ts"
-    },
-    "./extension-site-types": {
-      "types": "./src/extension-site-types.ts",
-      "development": "./src/extension-site-types.ts",
-      "import": "./src/extension-site-types.ts",
-      "default": "./src/extension-site-types.ts"
-    },
     "./registry": {
       "types": "./src/registry.ts",
       "development": "./src/registry.ts",
@@ -37,30 +25,6 @@
       "development": "./src/base.ts",
       "import": "./src/base.ts",
       "default": "./src/base.ts"
-    },
-    "./adapters/chatgpt/shared/api-client": {
-      "types": "./src/adapters/chatgpt/shared/api-client.ts",
-      "development": "./src/adapters/chatgpt/shared/api-client.ts",
-      "import": "./src/adapters/chatgpt/shared/api-client.ts",
-      "default": "./src/adapters/chatgpt/shared/api-client.ts"
-    },
-    "./adapters/chatgpt/shared/message-converter": {
-      "types": "./src/adapters/chatgpt/shared/message-converter.ts",
-      "development": "./src/adapters/chatgpt/shared/message-converter.ts",
-      "import": "./src/adapters/chatgpt/shared/message-converter.ts",
-      "default": "./src/adapters/chatgpt/shared/message-converter.ts"
-    },
-    "./adapters/claude/shared/api-client": {
-      "types": "./src/adapters/claude/shared/api-client.ts",
-      "development": "./src/adapters/claude/shared/api-client.ts",
-      "import": "./src/adapters/claude/shared/api-client.ts",
-      "default": "./src/adapters/claude/shared/api-client.ts"
-    },
-    "./adapters/claude/shared/message-converter": {
-      "types": "./src/adapters/claude/shared/message-converter.ts",
-      "development": "./src/adapters/claude/shared/message-converter.ts",
-      "import": "./src/adapters/claude/shared/message-converter.ts",
-      "default": "./src/adapters/claude/shared/message-converter.ts"
     },
     "./manifest": {
       "types": "./src/manifest/index.ts",
