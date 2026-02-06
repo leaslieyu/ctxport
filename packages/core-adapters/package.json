@@ -1,0 +1,93 @@
+{
+  "name": "@ctxport/core-adapters",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Adapter registry and implementations for parsing conversations",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "development": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./extension-sites": {
+      "types": "./src/extension-sites.ts",
+      "development": "./src/extension-sites.ts",
+      "import": "./src/extension-sites.ts",
+      "default": "./src/extension-sites.ts"
+    },
+    "./extension-site-types": {
+      "types": "./src/extension-site-types.ts",
+      "development": "./src/extension-site-types.ts",
+      "import": "./src/extension-site-types.ts",
+      "default": "./src/extension-site-types.ts"
+    },
+    "./registry": {
+      "types": "./src/registry.ts",
+      "development": "./src/registry.ts",
+      "import": "./src/registry.ts",
+      "default": "./src/registry.ts"
+    },
+    "./base": {
+      "types": "./src/base.ts",
+      "development": "./src/base.ts",
+      "import": "./src/base.ts",
+      "default": "./src/base.ts"
+    },
+    "./adapters/chatgpt/ext-adapter": {
+      "types": "./src/adapters/chatgpt/ext-adapter/index.ts",
+      "development": "./src/adapters/chatgpt/ext-adapter/index.ts",
+      "import": "./src/adapters/chatgpt/ext-adapter/index.ts",
+      "default": "./src/adapters/chatgpt/ext-adapter/index.ts"
+    },
+    "./adapters/chatgpt/shared/message-converter": {
+      "types": "./src/adapters/chatgpt/shared/message-converter.ts",
+      "development": "./src/adapters/chatgpt/shared/message-converter.ts",
+      "import": "./src/adapters/chatgpt/shared/message-converter.ts",
+      "default": "./src/adapters/chatgpt/shared/message-converter.ts"
+    },
+    "./adapters/claude/ext-adapter": {
+      "types": "./src/adapters/claude/ext-adapter/index.ts",
+      "development": "./src/adapters/claude/ext-adapter/index.ts",
+      "import": "./src/adapters/claude/ext-adapter/index.ts",
+      "default": "./src/adapters/claude/ext-adapter/index.ts"
+    },
+    "./adapters/claude/shared/message-converter": {
+      "types": "./src/adapters/claude/shared/message-converter.ts",
+      "development": "./src/adapters/claude/shared/message-converter.ts",
+      "import": "./src/adapters/claude/shared/message-converter.ts",
+      "default": "./src/adapters/claude/shared/message-converter.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc -b --pretty false",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@ctxport/core-schema": "workspace:*",
+    "uuid": "^13.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:tooling",
+    "tsup": "catalog:tooling",
+    "typescript": "catalog:tooling",
+    "vitest": "catalog:tooling"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  }
+}

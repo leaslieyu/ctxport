@@ -1,0 +1,44 @@
+{
+  "name": "@ctxport/extension",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "CtxPort browser extension - Copy AI conversations as Context Bundles",
+  "scripts": {
+    "prepare": "wxt prepare",
+    "dev": "wxt",
+    "dev:firefox": "wxt --browser firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build --browser firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip --browser firefox",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc -b --pretty false",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@ctxport/core-adapters": "workspace:*",
+    "@ctxport/core-markdown": "workspace:*",
+    "@ctxport/core-schema": "workspace:*",
+    "clsx": "^2.1.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "catalog:tooling",
+    "@types/react": "catalog:tooling",
+    "@types/react-dom": "catalog:tooling",
+    "@wxt-dev/module-react": "^1.1.5",
+    "autoprefixer": "^10.4.24",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "catalog:tooling",
+    "vite": "catalog:tooling",
+    "vite-tsconfig-paths": "^6.0.5",
+    "vitest": "catalog:tooling",
+    "wxt": "^0.20.13"
+  }
+}
