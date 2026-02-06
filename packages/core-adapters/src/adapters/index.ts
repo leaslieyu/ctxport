@@ -1,2 +1,2 @@
-export { ChatGPTExtAdapter, chatGPTExtAdapter } from "./chatgpt/ext-adapter";
-export { ClaudeExtAdapter, claudeExtAdapter } from "./claude/ext-adapter";
+export { chatgptManifest, chatgptHooks } from "./chatgpt/manifest";
+export { claudeManifest, claudeHooks } from "./claude/manifest";

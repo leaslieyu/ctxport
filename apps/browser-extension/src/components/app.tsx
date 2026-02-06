@@ -6,26 +6,25 @@ import { ListCopyIcon } from "./list-copy-icon";
 import { Toast, type ToastData } from "./toast";
 import { BatchProvider } from "./batch-mode/batch-provider";
 import { BatchBar } from "./batch-mode/batch-bar";
-import { ChatGPTInjector } from "~/injectors/chatgpt-injector";
-import { ClaudeInjector } from "~/injectors/claude-injector";
+import { ManifestInjector } from "~/injectors/manifest-injector";
 import type { PlatformInjector } from "~/injectors/base-injector";
 import { INJECTION_DELAY_MS } from "~/injectors/base-injector";
 import { EXTENSION_WINDOW_EVENT } from "~/constants/extension-runtime";
+import {
+  getRegisteredManifests,
+  type ManifestEntry,
+} from "@ctxport/core-adapters/manifest";
 
-function detectPlatform(url: string): "chatgpt" | "claude" | null {
-  if (/chatgpt\.com|chat\.openai\.com/.test(url)) return "chatgpt";
-  if (/claude\.ai/.test(url)) return "claude";
-  return null;
+function detectManifest(url: string): ManifestEntry | undefined {
+  return getRegisteredManifests().find((entry) =>
+    entry.manifest.urls.hostPatterns.some((p) => p.test(url)),
+  );
 }
 
-/** Check if the current URL is a conversation detail page */
 function isConversationPage(url: string): boolean {
-  // ChatGPT: /c/{id} or /g/{id}
-  if (/chatgpt\.com\/(?:c|g)\//.test(url)) return true;
-  if (/chat\.openai\.com\/(?:c|g)\//.test(url)) return true;
-  // Claude: /chat/{uuid}
-  if (/claude\.ai\/chat\/[a-zA-Z0-9-]+/.test(url)) return true;
-  return false;
+  return getRegisteredManifests().some((entry) =>
+    entry.manifest.urls.conversationUrlPatterns.some((p) => p.test(url)),
+  );
 }
 
 export default function App() {
@@ -43,7 +42,8 @@ export default function App() {
 
   const dismissToast = useCallback(() => setToast(null), []);
 
-  const platform = detectPlatform(url);
+  const entry = detectManifest(url);
+  const platform = entry?.manifest.provider ?? null;
   const onConversationPage = isConversationPage(url);
 
   useEffect(() => {
@@ -52,10 +52,9 @@ export default function App() {
     injectorRef.current = null;
     setShowFloatingCopy(false);
 
-    if (!platform) return;
+    if (!entry) return;
 
-    const injector =
-      platform === "chatgpt" ? new ChatGPTInjector() : new ClaudeInjector();
+    const injector = new ManifestInjector(entry.manifest);
     injectorRef.current = injector;
 
     // Inject copy button in conversation detail header
@@ -65,13 +64,12 @@ export default function App() {
     });
 
     // After injection delay + a buffer, check if the copy button was injected.
-    // If not (e.g., Claude's header selectors didn't match), show floating fallback.
+    // If not (e.g., header selectors didn't match), show floating fallback.
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
     if (onConversationPage) {
       fallbackTimer = setTimeout(() => {
-        const injected = document.querySelector(
-          ".ctxport-chatgpt-copy-btn, .ctxport-claude-copy-btn",
-        );
+        const copyBtnClass = `ctxport-${entry.manifest.provider}-copy-btn`;
+        const injected = document.querySelector(`.${copyBtnClass}`);
         if (!injected) {
           setShowFloatingCopy(true);
         }
@@ -84,7 +82,7 @@ export default function App() {
       root.render(
         <ListCopyIcon
           conversationId={conversationId}
-          provider={platform}
+          provider={platform as "chatgpt" | "claude"}
           onToast={showToast}
         />,
       );
@@ -94,7 +92,7 @@ export default function App() {
       injector.cleanup();
       if (fallbackTimer) clearTimeout(fallbackTimer);
     };
-  }, [url, platform, onConversationPage, showToast]);
+  }, [url, entry, platform, onConversationPage, showToast]);
 
   // Listen for keyboard shortcuts via window events
   useEffect(() => {

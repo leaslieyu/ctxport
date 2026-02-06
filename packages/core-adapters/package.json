@@ -38,11 +38,11 @@
       "import": "./src/base.ts",
       "default": "./src/base.ts"
     },
-    "./adapters/chatgpt/ext-adapter": {
-      "types": "./src/adapters/chatgpt/ext-adapter/index.ts",
-      "development": "./src/adapters/chatgpt/ext-adapter/index.ts",
-      "import": "./src/adapters/chatgpt/ext-adapter/index.ts",
-      "default": "./src/adapters/chatgpt/ext-adapter/index.ts"
+    "./adapters/chatgpt/shared/api-client": {
+      "types": "./src/adapters/chatgpt/shared/api-client.ts",
+      "development": "./src/adapters/chatgpt/shared/api-client.ts",
+      "import": "./src/adapters/chatgpt/shared/api-client.ts",
+      "default": "./src/adapters/chatgpt/shared/api-client.ts"
     },
     "./adapters/chatgpt/shared/message-converter": {
       "types": "./src/adapters/chatgpt/shared/message-converter.ts",
@@ -50,17 +50,29 @@
       "import": "./src/adapters/chatgpt/shared/message-converter.ts",
       "default": "./src/adapters/chatgpt/shared/message-converter.ts"
     },
-    "./adapters/claude/ext-adapter": {
-      "types": "./src/adapters/claude/ext-adapter/index.ts",
-      "development": "./src/adapters/claude/ext-adapter/index.ts",
-      "import": "./src/adapters/claude/ext-adapter/index.ts",
-      "default": "./src/adapters/claude/ext-adapter/index.ts"
+    "./adapters/claude/shared/api-client": {
+      "types": "./src/adapters/claude/shared/api-client.ts",
+      "development": "./src/adapters/claude/shared/api-client.ts",
+      "import": "./src/adapters/claude/shared/api-client.ts",
+      "default": "./src/adapters/claude/shared/api-client.ts"
     },
     "./adapters/claude/shared/message-converter": {
       "types": "./src/adapters/claude/shared/message-converter.ts",
       "development": "./src/adapters/claude/shared/message-converter.ts",
       "import": "./src/adapters/claude/shared/message-converter.ts",
       "default": "./src/adapters/claude/shared/message-converter.ts"
+    },
+    "./manifest": {
+      "types": "./src/manifest/index.ts",
+      "development": "./src/manifest/index.ts",
+      "import": "./src/manifest/index.ts",
+      "default": "./src/manifest/index.ts"
+    },
+    "./manifest/schema": {
+      "types": "./src/manifest/schema.ts",
+      "development": "./src/manifest/schema.ts",
+      "import": "./src/manifest/schema.ts",
+      "default": "./src/manifest/schema.ts"
     }
   },
   "files": [

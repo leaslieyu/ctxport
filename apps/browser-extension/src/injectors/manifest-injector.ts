@@ -1,3 +1,4 @@
+import type { AdapterManifest } from "@ctxport/core-adapters/manifest";
 import {
   type PlatformInjector,
   markInjected,
@@ -8,12 +9,12 @@ import {
   INJECTION_DELAY_MS,
 } from "./base-injector";
 
-const COPY_BTN_CLASS = "ctxport-chatgpt-copy-btn";
-const LIST_ICON_CLASS = "ctxport-chatgpt-list-icon";
-const BATCH_CB_CLASS = "ctxport-chatgpt-batch-cb";
-
-export class ChatGPTInjector implements PlatformInjector {
-  readonly platform = "chatgpt" as const;
+/**
+ * 通用 injector：从 manifest.injection 配置驱动 DOM 注入。
+ * 替代平台特定的 ChatGPTInjector / ClaudeInjector。
+ */
+export class ManifestInjector implements PlatformInjector {
+  readonly platform: string;
   private observers: MutationObserver[] = [];
   private timers: ReturnType<typeof setTimeout>[] = [];
   private renderButton: ((container: HTMLElement) => void) | null = null;
@@ -24,20 +25,34 @@ export class ChatGPTInjector implements PlatformInjector {
     | ((container: HTMLElement, conversationId: string) => void)
     | null = null;
 
+  private readonly copyBtnClass: string;
+  private readonly listIconClass: string;
+  private readonly batchCbClass: string;
+
+  constructor(private readonly manifest: AdapterManifest) {
+    this.platform = manifest.provider;
+    this.copyBtnClass = `ctxport-${manifest.provider}-copy-btn`;
+    this.listIconClass = `ctxport-${manifest.provider}-list-icon`;
+    this.batchCbClass = `ctxport-${manifest.provider}-batch-cb`;
+  }
+
   injectCopyButton(renderButton: (container: HTMLElement) => void): void {
     this.renderButton = renderButton;
 
-    // Delay initial injection to let host React finish hydration
     const timer = setTimeout(() => {
       this.tryInjectCopyButton();
-
       const debouncedTry = debouncedObserverCallback(() =>
         this.tryInjectCopyButton(),
       );
-      // Observe only the main content area, not the entire body
-      const target = document.querySelector("main") ?? document.body;
+      const targetSel = this.manifest.injection.mainContentSelector;
+      const target = targetSel
+        ? document.querySelector(targetSel)
+        : document.querySelector("main") ?? document.body;
       const observer = new MutationObserver(debouncedTry);
-      observer.observe(target, { childList: true, subtree: true });
+      observer.observe(target ?? document.body, {
+        childList: true,
+        subtree: true,
+      });
       this.observers.push(observer);
     }, INJECTION_DELAY_MS);
     this.timers.push(timer);
@@ -46,19 +61,31 @@ export class ChatGPTInjector implements PlatformInjector {
   private tryInjectCopyButton(): void {
     if (!this.renderButton) return;
 
-    // ChatGPT title bar action buttons area
-    const selectors = [
-      "main .sticky .flex.items-center.gap-2",
-      'main header [class*="flex"][class*="items-center"]',
-      'div[data-testid="conversation-header"] .flex.items-center',
-    ];
-
+    const { selectors, position } = this.manifest.injection.copyButton;
     for (const selector of selectors) {
       const target = document.querySelector<HTMLElement>(selector);
       if (target && !isInjected(target, "copy-btn")) {
         const container = createContainer(`ctxport-copy-btn-${Date.now()}`);
-        container.className = COPY_BTN_CLASS;
-        target.insertBefore(container, target.firstChild);
+        container.className = this.copyBtnClass;
+
+        switch (position) {
+          case "prepend":
+            target.insertBefore(container, target.firstChild);
+            break;
+          case "append":
+            target.appendChild(container);
+            break;
+          case "before":
+            target.parentElement?.insertBefore(container, target);
+            break;
+          case "after":
+            target.parentElement?.insertBefore(
+              container,
+              target.nextSibling,
+            );
+            break;
+        }
+
         markInjected(target, "copy-btn");
         this.renderButton(container);
         return;
@@ -73,14 +100,18 @@ export class ChatGPTInjector implements PlatformInjector {
 
     const timer = setTimeout(() => {
       this.tryInjectListIcons();
-
       const debouncedTry = debouncedObserverCallback(() =>
         this.tryInjectListIcons(),
       );
-      // Observe only the sidebar nav, not the entire body
-      const sidebar = document.querySelector("nav") ?? document.body;
+      const sidebarSel = this.manifest.injection.sidebarSelector;
+      const sidebar = sidebarSel
+        ? document.querySelector(sidebarSel)
+        : document.querySelector("nav") ?? document.body;
       const observer = new MutationObserver(debouncedTry);
-      observer.observe(sidebar, { childList: true, subtree: true });
+      observer.observe(sidebar ?? document.body, {
+        childList: true,
+        subtree: true,
+      });
       this.observers.push(observer);
     }, INJECTION_DELAY_MS);
     this.timers.push(timer);
@@ -89,9 +120,9 @@ export class ChatGPTInjector implements PlatformInjector {
   private tryInjectListIcons(): void {
     if (!this.renderIcon) return;
 
-    // ChatGPT sidebar conversation list items have <a> tags with href="/c/{id}"
+    const { listItem } = this.manifest.injection;
     const links = document.querySelectorAll<HTMLAnchorElement>(
-      'nav a[href^="/c/"], nav a[href^="/g/"]',
+      listItem.linkSelector,
     );
 
     for (const link of links) {
@@ -99,11 +130,12 @@ export class ChatGPTInjector implements PlatformInjector {
 
       const href = link.getAttribute("href");
       if (!href) continue;
-      const id = href.split("/").pop();
+      const match = listItem.idPattern.exec(href);
+      const id = match?.[1];
       if (!id) continue;
 
       const container = createContainer(`ctxport-list-icon-${id}`);
-      container.className = LIST_ICON_CLASS;
+      container.className = this.listIconClass;
       container.style.position = "absolute";
       container.style.right = "36px";
       container.style.top = "50%";
@@ -112,16 +144,13 @@ export class ChatGPTInjector implements PlatformInjector {
       container.style.transition = "opacity 150ms ease";
       container.style.zIndex = "10";
 
-      // Make the parent relatively positioned if not already
-      const parent = link.closest("li") ?? link;
+      const parent = link.closest("li") ?? link.closest("div") ?? link;
       if (parent instanceof HTMLElement) {
         const computed = getComputedStyle(parent);
         if (computed.position === "static") {
           parent.style.position = "relative";
         }
         parent.appendChild(container);
-
-        // Show on hover
         parent.addEventListener("mouseenter", () => {
           container.style.opacity = "1";
         });
@@ -144,17 +173,24 @@ export class ChatGPTInjector implements PlatformInjector {
     const debouncedTry = debouncedObserverCallback(() =>
       this.tryInjectBatchCheckboxes(),
     );
-    const sidebar = document.querySelector("nav") ?? document.body;
+    const sidebarSel = this.manifest.injection.sidebarSelector;
+    const sidebar = sidebarSel
+      ? document.querySelector(sidebarSel)
+      : document.querySelector("nav") ?? document.body;
     const observer = new MutationObserver(debouncedTry);
-    observer.observe(sidebar, { childList: true, subtree: true });
+    observer.observe(sidebar ?? document.body, {
+      childList: true,
+      subtree: true,
+    });
     this.observers.push(observer);
   }
 
   private tryInjectBatchCheckboxes(): void {
     if (!this.renderCheckbox) return;
 
+    const { listItem } = this.manifest.injection;
     const links = document.querySelectorAll<HTMLAnchorElement>(
-      'nav a[href^="/c/"], nav a[href^="/g/"]',
+      listItem.linkSelector,
     );
 
     for (const link of links) {
@@ -162,15 +198,15 @@ export class ChatGPTInjector implements PlatformInjector {
 
       const href = link.getAttribute("href");
       if (!href) continue;
-      const id = href.split("/").pop();
+      const match = listItem.idPattern.exec(href);
+      const id = match?.[1];
       if (!id) continue;
 
       const container = createContainer(`ctxport-batch-cb-${id}`);
-      container.className = BATCH_CB_CLASS;
+      container.className = this.batchCbClass;
       container.style.marginRight = "4px";
       container.style.flexShrink = "0";
 
-      // Prepend before the text
       link.insertBefore(container, link.firstChild);
       markInjected(link, "batch-cb");
       this.renderCheckbox(container, id);
@@ -178,10 +214,10 @@ export class ChatGPTInjector implements PlatformInjector {
   }
 
   removeBatchCheckboxes(): void {
-    removeAllByClass(BATCH_CB_CLASS);
-    // Reset injected markers for batch
+    removeAllByClass(this.batchCbClass);
+    const { listItem } = this.manifest.injection;
     const links = document.querySelectorAll<HTMLAnchorElement>(
-      'nav a[href^="/c/"], nav a[href^="/g/"]',
+      listItem.linkSelector,
     );
     for (const link of links) {
       if (link.getAttribute("data-ctxport-injected") === "batch-cb") {
@@ -195,9 +231,9 @@ export class ChatGPTInjector implements PlatformInjector {
     this.observers = [];
     for (const timer of this.timers) clearTimeout(timer);
     this.timers = [];
-    removeAllByClass(COPY_BTN_CLASS);
-    removeAllByClass(LIST_ICON_CLASS);
-    removeAllByClass(BATCH_CB_CLASS);
+    removeAllByClass(this.copyBtnClass);
+    removeAllByClass(this.listIconClass);
+    removeAllByClass(this.batchCbClass);
     this.renderButton = null;
     this.renderIcon = null;
     this.renderCheckbox = null;

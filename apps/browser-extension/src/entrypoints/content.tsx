@@ -91,7 +91,7 @@ export default defineContentScript({
           if (messageType === EXTENSION_RUNTIME_MESSAGE.COPY_CURRENT) {
             // Trigger copy on the injected copy button
             const btn = document.querySelector<HTMLButtonElement>(
-              ".ctxport-copy-btn button, .ctxport-chatgpt-copy-btn button, .ctxport-claude-copy-btn button",
+              '[class^="ctxport-"][class$="-copy-btn"] button',
             );
             btn?.click();
             return undefined;

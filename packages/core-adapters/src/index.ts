@@ -1,11 +1,7 @@
-import {
-  chatGPTExtAdapter as _chatGPTExtAdapter,
-  claudeExtAdapter as _claudeExtAdapter,
-} from "./adapters";
-import {
-  registerAdapter as _registerAdapter,
-  getAdapter as _getAdapter,
-} from "./registry";
+import { getAdapter as _getAdapter } from "./registry";
+import { registerManifestAdapter } from "./manifest/manifest-registry";
+import { chatgptManifest, chatgptHooks } from "./adapters/chatgpt/manifest";
+import { claudeManifest, claudeHooks } from "./adapters/claude/manifest";
 
 export {
   registerAdapter,
@@ -19,7 +15,6 @@ export {
 export type { ParseResult } from "./registry";
 
 export {
-  BaseExtAdapter,
   buildMessages,
   buildConversation,
   generateId,
@@ -42,18 +37,13 @@ export type {
   ExtensionSiteThemeTokens,
 } from "./extension-sites";
 
-export {
-  ChatGPTExtAdapter,
-  chatGPTExtAdapter,
-  ClaudeExtAdapter,
-  claudeExtAdapter,
-} from "./adapters";
+export { chatgptManifest, chatgptHooks, claudeManifest, claudeHooks } from "./adapters";
 
 export function registerBuiltinAdapters(): void {
-  if (!_getAdapter(_chatGPTExtAdapter.id)) {
-    _registerAdapter(_chatGPTExtAdapter);
+  if (!_getAdapter(chatgptManifest.id)) {
+    registerManifestAdapter({ manifest: chatgptManifest, hooks: chatgptHooks });
   }
-  if (!_getAdapter(_claudeExtAdapter.id)) {
-    _registerAdapter(_claudeExtAdapter);
+  if (!_getAdapter(claudeManifest.id)) {
+    registerManifestAdapter({ manifest: claudeManifest, hooks: claudeHooks });
   }
 }

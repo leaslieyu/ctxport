@@ -1,5 +1,5 @@
 export interface PlatformInjector {
-  readonly platform: "chatgpt" | "claude";
+  readonly platform: string;
 
   /** Inject copy button in conversation detail header */
   injectCopyButton(renderButton: (container: HTMLElement) => void): void;

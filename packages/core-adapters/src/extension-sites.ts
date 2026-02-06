@@ -1,12 +1,48 @@
-import { CHATGPT_EXT_SITE } from "./adapters/chatgpt/ext-adapter";
-import { CLAUDE_EXT_SITE } from "./adapters/claude/ext-adapter";
+import type { Provider } from "@ctxport/core-schema";
 import type {
   ExtensionSiteConfig,
   ExtensionSiteThemeTokens,
 } from "./extension-site-types";
+import type { AdapterManifest } from "./manifest/schema";
+import type { AdapterHooks } from "./manifest/hooks";
+import { chatgptManifest, chatgptHooks } from "./adapters/chatgpt/manifest";
+import { claudeManifest, claudeHooks } from "./adapters/claude/manifest";
 
-export { CHATGPT_EXT_SITE, CLAUDE_EXT_SITE };
 export type { ExtensionSiteConfig, ExtensionSiteThemeTokens };
+
+function manifestToSiteConfig(
+  manifest: AdapterManifest,
+  hooks?: AdapterHooks,
+): ExtensionSiteConfig {
+  return {
+    id: manifest.provider,
+    provider: manifest.provider as Provider,
+    name: manifest.name,
+    hostPermissions: manifest.urls.hostPermissions,
+    hostPatterns: manifest.urls.hostPatterns,
+    conversationUrlPatterns: manifest.urls.conversationUrlPatterns,
+    getConversationId: (url: string) => {
+      if (hooks?.extractConversationId) {
+        return hooks.extractConversationId(url);
+      }
+      for (const pattern of manifest.urls.conversationUrlPatterns) {
+        const match = pattern.exec(url);
+        if (match?.[1]) return match[1];
+      }
+      return null;
+    },
+    theme: manifest.theme,
+  };
+}
+
+export const CHATGPT_EXT_SITE = manifestToSiteConfig(
+  chatgptManifest,
+  chatgptHooks,
+);
+export const CLAUDE_EXT_SITE = manifestToSiteConfig(
+  claudeManifest,
+  claudeHooks,
+);
 
 export const EXTENSION_SITE_CONFIGS: ExtensionSiteConfig[] = [
   CHATGPT_EXT_SITE,

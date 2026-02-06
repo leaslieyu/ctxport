@@ -6,13 +6,11 @@ import {
 } from "@ctxport/core-adapters";
 import {
   fetchConversationWithTokenRetry,
-  extractChatGPTConversationId,
-} from "@ctxport/core-adapters/adapters/chatgpt/ext-adapter";
+} from "@ctxport/core-adapters/adapters/chatgpt/shared/api-client";
 import {
   fetchClaudeConversation,
-  extractClaudeConversationId,
   extractClaudeOrgId,
-} from "@ctxport/core-adapters/adapters/claude/ext-adapter";
+} from "@ctxport/core-adapters/adapters/claude/shared/api-client";
 import { convertShareDataToMessages } from "@ctxport/core-adapters/adapters/chatgpt/shared/message-converter";
 import { convertClaudeMessagesToRawMessages } from "@ctxport/core-adapters/adapters/claude/shared/message-converter";
 import {
