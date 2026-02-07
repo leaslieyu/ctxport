@@ -16,7 +16,7 @@ const MOTION = {
 } as const;
 
 interface CopyButtonProps {
-  onToast: (message: string, type: "success" | "error") => void;
+  onToast: (data: { title: string; subtitle?: string; type: "success" | "error"; isLarge?: boolean }) => void;
 }
 
 export function CopyButton({ onToast }: CopyButtonProps) {
@@ -77,9 +77,19 @@ export function CopyButton({ onToast }: CopyButtonProps) {
       const tokenStr = result.estimatedTokens >= 1000
         ? `~${(result.estimatedTokens / 1000).toFixed(1)}K`
         : `~${result.estimatedTokens}`;
-      onToast(`Copied ${result.messageCount} messages \u00b7 ${tokenStr} tokens`, "success");
+      const isLarge = result.messageCount >= 50 || result.estimatedTokens >= 10000;
+      onToast({
+        title: "CtxPort \u00b7 Copied to clipboard",
+        subtitle: `${result.messageCount} messages \u00b7 ${tokenStr} tokens`,
+        type: "success",
+        isLarge,
+      });
     } else if (state === "error" && error) {
-      onToast(`Copy failed: ${error}`, "error");
+      onToast({
+        title: "CtxPort \u00b7 Copy failed",
+        subtitle: error,
+        type: "error",
+      });
     }
   }, [state, result, error, onToast]);
 

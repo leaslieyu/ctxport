@@ -21,7 +21,7 @@ type IconState = "idle" | "loading" | "success" | "error";
 
 interface ListCopyIconProps {
   conversationId: string;
-  onToast: (message: string, type: "success" | "error") => void;
+  onToast: (data: { title: string; subtitle?: string; type: "success" | "error"; isLarge?: boolean }) => void;
 }
 
 export function ListCopyIcon({
@@ -73,10 +73,13 @@ export function ListCopyIcon({
           serialized.estimatedTokens >= 1000
             ? `~${(serialized.estimatedTokens / 1000).toFixed(1)}K`
             : `~${serialized.estimatedTokens}`;
-        onToast(
-          `Copied ${serialized.messageCount} messages \u00b7 ${tokenStr} tokens`,
-          "success",
-        );
+        const isLarge = serialized.messageCount >= 50 || serialized.estimatedTokens >= 10000;
+        onToast({
+          title: "CtxPort \u00b7 Copied to clipboard",
+          subtitle: `${serialized.messageCount} messages \u00b7 ${tokenStr} tokens`,
+          type: "success",
+          isLarge,
+        });
 
         setTimeout(() => {
           if (mountedRef.current) setState("idle");
@@ -84,10 +87,11 @@ export function ListCopyIcon({
       } catch (err) {
         if (!mountedRef.current) return;
         setState("error");
-        onToast(
-          "Fetch failed. Please open the conversation and use the in-page copy button.",
-          "error",
-        );
+        onToast({
+          title: "CtxPort \u00b7 Copy failed",
+          subtitle: "Fetch failed. Please open the conversation and use the in-page copy button.",
+          type: "error",
+        });
         setTimeout(() => {
           if (mountedRef.current) setState("idle");
         }, 3000);

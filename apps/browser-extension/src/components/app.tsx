@@ -13,8 +13,8 @@ export default function App() {
   const cleanupRef = useRef<(() => void) | null>(null);
 
   const showToast = useCallback(
-    (message: string, type: "success" | "error") => {
-      setToast({ message, type });
+    (data: { title: string; subtitle?: string; type: "success" | "error"; isLarge?: boolean }) => {
+      setToast({ ...data });
     },
     [],
   );
@@ -82,7 +82,7 @@ const FLOATING_MOTION = {
 function FloatingCopyButton({
   onToast,
 }: {
-  onToast: (message: string, type: "success" | "error") => void;
+  onToast: (data: { title: string; subtitle?: string; type: "success" | "error"; isLarge?: boolean }) => void;
 }) {
   const [hovered, setHovered] = useState(false);
 

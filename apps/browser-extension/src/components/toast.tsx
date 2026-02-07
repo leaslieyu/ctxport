@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 
 export interface ToastData {
-  message: string;
+  title: string;
+  subtitle?: string;
   type: "success" | "error";
+  isLarge?: boolean;
 }
 
 interface ToastProps {
@@ -228,7 +230,7 @@ export function Toast({ data, onDismiss }: ToastProps) {
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: 10,
+          gap: 8,
           padding: "10px 20px",
           marginTop: 12,
           borderRadius: 12,
@@ -251,7 +253,23 @@ export function Toast({ data, onDismiss }: ToastProps) {
         }}
       >
         {isSuccess ? <SuccessIcon /> : <ErrorIcon />}
-        <span>{current.message}</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>
+            {current.title}
+          </span>
+          {current.subtitle && (
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: current.isLarge ? 500 : 400,
+                lineHeight: 1.3,
+                opacity: 0.78,
+              }}
+            >
+              {current.subtitle}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
