@@ -100,8 +100,8 @@ jobs:
         id: zip
         working-directory: apps/browser-extension
         run: |
-          CHROME_ZIP=$(ls .output/*-chrome.zip 2>/dev/null | head -1)
-          EDGE_ZIP=$(ls .output/*-edge.zip 2>/dev/null | head -1)
+          CHROME_ZIP=$(ls dist/*-chrome.zip 2>/dev/null | head -1)
+          EDGE_ZIP=$(ls dist/*-edge.zip 2>/dev/null | head -1)
 
           echo "chrome_zip=$CHROME_ZIP" >> "$GITHUB_OUTPUT"
           echo "edge_zip=$EDGE_ZIP" >> "$GITHUB_OUTPUT"
@@ -113,7 +113,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: chrome-extension
-          path: apps/browser-extension/.output/*-chrome.zip
+          path: apps/browser-extension/dist/*-chrome.zip
           retention-days: 7
           include-hidden-files: true
           if-no-files-found: error
@@ -122,7 +122,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: edge-extension
-          path: apps/browser-extension/.output/*-edge.zip
+          path: apps/browser-extension/dist/*-edge.zip
           retention-days: 7
           include-hidden-files: true
           if-no-files-found: error
