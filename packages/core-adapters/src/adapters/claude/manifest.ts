@@ -3,7 +3,7 @@ import type { AdapterHooks } from "../../manifest/hooks";
 import { extractClaudeMessageText } from "./shared/message-converter";
 import type { ClaudeMessage } from "./shared/types";
 
-// --- 声明层 ---
+// --- Declaration layer ---
 
 export const claudeManifest = {
   id: "claude-ext",
@@ -47,7 +47,7 @@ export const claudeManifest = {
     },
     content: {
       messagesPath: "chat_messages",
-      textPath: "_extractedText", // 由 extractMessageText 处理
+      textPath: "_extractedText", // Processed by extractMessageText hook
       titlePath: "name",
       sortField: "created_at",
       sortOrder: "asc" as const,
@@ -92,20 +92,20 @@ export const claudeManifest = {
 
   meta: {
     reliability: "high" as const,
-    coverage: "Claude 全部对话类型（含 Opus, Sonnet, Haiku）",
+    coverage: "All Claude conversation types (including Opus, Sonnet, Haiku)",
     lastVerified: "2026-02-07",
     knownLimitations: [
-      "需要从 cookie 中提取 orgId",
-      "Artifact 标签转为代码块",
+      "Requires extracting orgId from cookies",
+      "Artifact tags are converted to code blocks",
     ],
   },
 } satisfies AdapterManifest;
 
-// --- 脚本层 ---
+// --- Hooks layer ---
 
 export const claudeHooks: AdapterHooks = {
   /**
-   * Claude 的认证信息存在 cookie 的 lastActiveOrg 中。
+   * Claude stores auth info in the lastActiveOrg cookie.
    */
   extractAuth(ctx) {
     const cookie = ctx.document?.cookie ?? "";
@@ -115,7 +115,7 @@ export const claudeHooks: AdapterHooks = {
   },
 
   /**
-   * headless 版本：直接从 document.cookie 读取 orgId，不依赖 HookContext。
+   * Headless version: reads orgId directly from document.cookie without requiring HookContext.
    */
   extractAuthHeadless(): Record<string, string> {
     const cookie = document.cookie;
@@ -125,14 +125,14 @@ export const claudeHooks: AdapterHooks = {
   },
 
   /**
-   * Claude 消息内容需要从 content 数组中提取文本，并处理 artifact 标签。
+   * Claude message content needs to be extracted from the content array and artifact tags processed.
    */
   extractMessageText(rawMessage: unknown) {
     return extractClaudeMessageText(rawMessage as ClaudeMessage);
   },
 
   /**
-   * 合并连续同角色消息（Claude 可能把一个回复拆成多条消息）。
+   * Merge consecutive messages with the same role (Claude may split a single reply into multiple messages).
    */
   afterParse(messages) {
     const merged: typeof messages = [];

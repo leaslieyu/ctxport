@@ -3,10 +3,10 @@ import { ManifestAdapter } from "../manifest/manifest-adapter";
 import type { AdapterManifest } from "../manifest/schema";
 import type { AdapterHooks } from "../manifest/hooks";
 
-// Node 环境下没有 document，用 mock 替代
+// No document in Node environment, use mock instead
 const mockDocument = { cookie: "" } as unknown as Document;
 
-// 最小可用 manifest（用于测试 ManifestAdapter 引擎逻辑）
+// Minimal valid manifest (for testing ManifestAdapter engine logic)
 function createTestManifest(
   overrides: Partial<AdapterManifest> = {},
 ): AdapterManifest {
@@ -81,7 +81,7 @@ describe("ManifestAdapter", () => {
   });
 
   describe("canHandle", () => {
-    it("匹配会话 URL 时返回 true", () => {
+    it("returns true when URL matches a conversation pattern", () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
       expect(
@@ -93,7 +93,7 @@ describe("ManifestAdapter", () => {
       ).toBe(true);
     });
 
-    it("不匹配时返回 false", () => {
+    it("returns false when URL does not match", () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
       expect(
@@ -105,7 +105,7 @@ describe("ManifestAdapter", () => {
       ).toBe(false);
     });
 
-    it("非 ext 类型返回 false", () => {
+    it("returns false for non-ext type", () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
       expect(
@@ -117,7 +117,7 @@ describe("ManifestAdapter", () => {
       ).toBe(true);
     });
 
-    it("主页 URL（非会话页）返回 false", () => {
+    it("returns false for home page URL (not a conversation page)", () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
       expect(
@@ -129,7 +129,7 @@ describe("ManifestAdapter", () => {
       ).toBe(false);
     });
 
-    it("带 query 参数的会话 URL 返回 true", () => {
+    it("returns true for conversation URL with query parameters", () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
       expect(
@@ -141,7 +141,7 @@ describe("ManifestAdapter", () => {
       ).toBe(true);
     });
 
-    it("带 fragment 的会话 URL 返回 true", () => {
+    it("returns true for conversation URL with fragment", () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
       expect(
@@ -154,8 +154,8 @@ describe("ManifestAdapter", () => {
     });
   });
 
-  describe("parse — 消息解析逻辑", () => {
-    it("正常解析简单消息列表", async () => {
+  describe("parse — message parsing logic", () => {
+    it("parses a simple message list correctly", async () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
 
@@ -189,7 +189,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages[1]!.contentMarkdown).toBe("Hi there!");
     });
 
-    it("跳过角色为 skip 的消息", async () => {
+    it("skips messages with role mapped to skip", async () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
 
@@ -220,7 +220,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages[0]!.role).toBe("user");
     });
 
-    it("跳过空内容消息", async () => {
+    it("skips messages with empty content", async () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
 
@@ -251,7 +251,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages[0]!.role).toBe("assistant");
     });
 
-    it("使用 filters.skipWhen 过滤消息", async () => {
+    it("filters messages using filters.skipWhen", async () => {
       const manifest = createTestManifest({
         filters: {
           skipWhen: [{ field: "hidden", equals: true }],
@@ -286,7 +286,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages[1]!.contentMarkdown).toBe("Visible");
     });
 
-    it("filters.skipWhen 支持 exists 条件", async () => {
+    it("filters.skipWhen supports exists condition", async () => {
       const manifest = createTestManifest({
         filters: {
           skipWhen: [{ field: "metadata.deleted", exists: true }],
@@ -320,7 +320,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages[0]!.contentMarkdown).toBe("Hello");
     });
 
-    it("filters.skipWhen 支持 exists: false 条件（字段不存在时跳过）", async () => {
+    it("filters.skipWhen supports exists: false (skip when field is absent)", async () => {
       const manifest = createTestManifest({
         filters: {
           skipWhen: [{ field: "content", exists: false }],
@@ -350,12 +350,12 @@ describe("ManifestAdapter", () => {
         document: mockDocument,
       });
 
-      // 第二条消息没有 content 字段，exists: false 会跳过它
+      // Second message has no content field, exists: false will skip it
       expect(result.messages).toHaveLength(1);
       expect(result.messages[0]!.contentMarkdown).toBe("Hello");
     });
 
-    it("filters.skipWhen 对 equals: null 不会跳过 undefined 字段", async () => {
+    it("filters.skipWhen with equals: null does not skip undefined fields", async () => {
       const manifest = createTestManifest({
         filters: {
           skipWhen: [{ field: "status", equals: null }],
@@ -390,7 +390,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages[0]!.contentMarkdown).toBe("No status");
     });
 
-    it("filters.skipWhen matchesPattern 不匹配非字符串值", async () => {
+    it("filters.skipWhen matchesPattern does not match non-string values", async () => {
       const manifest = createTestManifest({
         filters: {
           skipWhen: [{ field: "count", matchesPattern: "\\d+" }],
@@ -426,7 +426,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages[0]!.contentMarkdown).toBe("Hello");
     });
 
-    it("filters.skipWhen 支持 matchesPattern 条件", async () => {
+    it("filters.skipWhen supports matchesPattern condition", async () => {
       const manifest = createTestManifest({
         filters: {
           skipWhen: [{ field: "status", matchesPattern: ".+" }],
@@ -463,8 +463,8 @@ describe("ManifestAdapter", () => {
     });
   });
 
-  describe("parse — 钩子集成", () => {
-    it("transformResponse 钩子预处理响应", async () => {
+  describe("parse — hooks integration", () => {
+    it("transformResponse hook preprocesses response", async () => {
       const manifest = createTestManifest();
       const hooks: AdapterHooks = {
         transformResponse(raw) {
@@ -503,7 +503,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages).toHaveLength(2);
     });
 
-    it("extractMessageText 钩子自定义文本提取", async () => {
+    it("extractMessageText hook customizes text extraction", async () => {
       const manifest = createTestManifest();
       const hooks: AdapterHooks = {
         extractMessageText(rawMsg) {
@@ -539,12 +539,12 @@ describe("ManifestAdapter", () => {
       expect(result.messages[1]!.contentMarkdown).toBe("Hi\nthere");
     });
 
-    it("async extractMessageText 钩子正常工作", async () => {
+    it("async extractMessageText hook works correctly", async () => {
       const manifest = createTestManifest();
       const hooks: AdapterHooks = {
         async extractMessageText(rawMsg) {
           const msg = rawMsg as { role: string; text: string };
-          // 模拟异步操作
+          // Simulate async operation
           await new Promise((r) => setTimeout(r, 1));
           return `[processed] ${msg.text}`;
         },
@@ -573,10 +573,10 @@ describe("ManifestAdapter", () => {
       expect(result.messages[0]!.contentMarkdown).toBe("[processed] Hello");
     });
 
-    it("afterParse 钩子后处理消息列表", async () => {
+    it("afterParse hook post-processes message list", async () => {
       const manifest = createTestManifest();
       const hooks: AdapterHooks = {
-        // 合并连续同角色消息
+        // Merge consecutive messages with the same role
         afterParse(messages) {
           const merged: typeof messages = [];
           for (const msg of messages) {
@@ -619,7 +619,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages[1]!.contentMarkdown).toBe("Part 1\nPart 2");
     });
 
-    it("extractConversationId 钩子覆盖默认提取", async () => {
+    it("extractConversationId hook overrides default extraction", async () => {
       const manifest = createTestManifest();
       const hooks: AdapterHooks = {
         extractConversationId(url: string) {
@@ -642,19 +642,19 @@ describe("ManifestAdapter", () => {
         }),
       );
 
-      // URL 不匹配 conversationUrlPatterns 的正则，但钩子可以从 query param 提取
+      // URL doesn't match conversationUrlPatterns regex, but hook extracts from query param
       const result = await adapter.parse({
         type: "ext",
         url: "https://test.com/chat/abc-123?id=custom-id",
         document: mockDocument,
       });
 
-      // 验证 fetch 被调用时使用了钩子提取的 conversationId
+      // Verify fetch was called with the conversation ID extracted by the hook
       const fetchCall = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]!;
       expect(fetchCall[0]).toContain("custom-id");
     });
 
-    it("extractAuth 钩子注入模板变量", async () => {
+    it("extractAuth hook injects template variables", async () => {
       const manifest = createTestManifest({
         endpoint: {
           urlTemplate:
@@ -696,10 +696,10 @@ describe("ManifestAdapter", () => {
     });
   });
 
-  describe("parse — 无 filters 时不跳过任何消息", () => {
-    it("manifest 无 filters 字段时正常解析所有消息", async () => {
+  describe("parse — no filters does not skip any messages", () => {
+    it("parses all messages when manifest has no filters field", async () => {
       const manifest = createTestManifest();
-      // 确认默认 manifest 没有 filters
+      // Confirm default manifest has no filters
       expect(manifest.filters).toBeUndefined();
       const adapter = new ManifestAdapter(manifest);
 
@@ -729,8 +729,8 @@ describe("ManifestAdapter", () => {
     });
   });
 
-  describe("parse — 排序", () => {
-    it("按 sortField 升序排列", async () => {
+  describe("parse — sorting", () => {
+    it("sorts by sortField in ascending order", async () => {
       const manifest = createTestManifest({
         parsing: {
           role: {
@@ -774,7 +774,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages[2]!.contentMarkdown).toBe("Third");
     });
 
-    it("按 sortField 降序排列", async () => {
+    it("sorts by sortField in descending order", async () => {
       const manifest = createTestManifest({
         parsing: {
           role: {
@@ -818,7 +818,7 @@ describe("ManifestAdapter", () => {
       expect(result.messages[2]!.contentMarkdown).toBe("First");
     });
 
-    it("messagesPath 指向非数组时返回空消息列表并抛错", async () => {
+    it("throws E-PARSE-005 when messagesPath points to a non-array", async () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
 
@@ -845,8 +845,8 @@ describe("ManifestAdapter", () => {
     });
   });
 
-  describe("parse — 错误处理", () => {
-    it("无效的会话 URL 抛出 E-PARSE-001", async () => {
+  describe("parse — error handling", () => {
+    it("throws E-PARSE-001 for invalid conversation URL", async () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
 
@@ -859,7 +859,7 @@ describe("ManifestAdapter", () => {
       ).rejects.toMatchObject({ code: "E-PARSE-001" });
     });
 
-    it("API 返回非 200 抛出 E-PARSE-005", async () => {
+    it("throws E-PARSE-005 when API returns non-200", async () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
 
@@ -880,7 +880,7 @@ describe("ManifestAdapter", () => {
       ).rejects.toMatchObject({ code: "E-PARSE-005" });
     });
 
-    it("空消息列表抛出 E-PARSE-005", async () => {
+    it("throws E-PARSE-005 for empty message list", async () => {
       const manifest = createTestManifest();
       const adapter = new ManifestAdapter(manifest);
 
@@ -902,8 +902,8 @@ describe("ManifestAdapter", () => {
     });
   });
 
-  describe("属性", () => {
-    it("从 manifest 中读取 id/version/name", () => {
+  describe("properties", () => {
+    it("reads id/version/name from manifest", () => {
       const manifest = createTestManifest({
         id: "my-adapter",
         version: "3.0.0",

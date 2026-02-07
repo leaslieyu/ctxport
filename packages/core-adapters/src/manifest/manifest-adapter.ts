@@ -20,7 +20,7 @@ export class ManifestAdapter implements Adapter {
   private readonly manifest: AdapterManifest;
   private readonly hooks: AdapterHooks;
 
-  // bearer token 缓存（仅 bearer-from-api 模式）
+  // Bearer token cache (bearer-from-api mode only)
   private tokenCache: { token: string; expiresAt: number } | null = null;
   private tokenPromise: Promise<string> | null = null;
 
@@ -60,24 +60,24 @@ export class ManifestAdapter implements Adapter {
       provider: this.manifest.provider,
     };
 
-    // 1. 获取认证信息
+    // 1. Resolve auth info
     const authVars = this.resolveAuth(ctx);
 
-    // 2. 获取 bearer token（如果需要）
+    // 2. Get bearer token (if needed)
     if (this.manifest.auth.method === "bearer-from-api") {
       const token = await this.getAccessToken();
       authVars._bearerToken = token;
     }
 
-    // 3. 构建请求
+    // 3. Build request
     const templateVars = { conversationId, ...authVars };
     const requestUrl = this.buildRequestUrl(ctx, templateVars);
     const headers = this.buildHeaders(authVars);
 
-    // 4. 发起请求
+    // 4. Fetch conversation
     const response = await this.fetchConversation(requestUrl, headers);
 
-    // 5. 解析响应
+    // 5. Parse response
     const { rawMessages, title } = await this.parseResponse(response, ctx);
 
     if (rawMessages.length === 0) {
@@ -87,7 +87,7 @@ export class ManifestAdapter implements Adapter {
       );
     }
 
-    // 6. 构建 Conversation
+    // 6. Build Conversation
     return buildConversation(rawMessages, {
       sourceType: "extension-current",
       provider: this.manifest.provider as Provider,
@@ -99,8 +99,8 @@ export class ManifestAdapter implements Adapter {
   }
 
   /**
-   * 按 conversationId 获取远程对话并构建 Conversation。
-   * 供 list-copy-icon / batch-mode 调用，不需要真实的页面 URL 和 document。
+   * Fetch a remote conversation by conversationId and build a Conversation.
+   * Used by list-copy-icon / batch-mode; does not require a real page URL or document.
    */
   async fetchById(conversationId: string): Promise<Conversation> {
     const syntheticUrl = this.manifest.conversationUrlTemplate.replace(
@@ -147,7 +147,7 @@ export class ManifestAdapter implements Adapter {
     });
   }
 
-  // --- 内部方法 ---
+  // --- Internal methods ---
 
   private extractConversationId(url: string): string | null {
     if (this.hooks.extractConversationId) {
@@ -177,7 +177,7 @@ export class ManifestAdapter implements Adapter {
 
     let url = this.manifest.endpoint.urlTemplate;
     for (const [key, value] of Object.entries(templateVars)) {
-      if (key.startsWith("_")) continue; // 跳过内部变量（如 _bearerToken）
+      if (key.startsWith("_")) continue; // Skip internal variables (e.g., _bearerToken)
       url = url.replace(`{${key}}`, encodeURIComponent(value));
     }
 
@@ -232,7 +232,7 @@ export class ManifestAdapter implements Adapter {
     });
 
     if (!response.ok) {
-      // bearer token 模式下，401 时自动重试
+      // Auto-retry on 401 in bearer token mode
       if (
         response.status === 401 &&
         this.manifest.auth.method === "bearer-from-api"
@@ -268,7 +268,7 @@ export class ManifestAdapter implements Adapter {
     raw: unknown,
     ctx: HookContext,
   ): Promise<{ rawMessages: RawMessage[]; title?: string }> {
-    // 1. transformResponse 钩子：预处理（如树状 -> 线性化）
+    // 1. transformResponse hook: pre-process (e.g., tree -> linear)
     let data: unknown = raw;
     let hookTitle: string | undefined;
     if (this.hooks.transformResponse) {
@@ -277,7 +277,7 @@ export class ManifestAdapter implements Adapter {
       hookTitle = result.title;
     }
 
-    // 2. 提取标题
+    // 2. Extract title
     const { parsing } = this.manifest;
     const title =
       hookTitle ??
@@ -285,13 +285,13 @@ export class ManifestAdapter implements Adapter {
         ? (getByPath(data, parsing.content.titlePath) as string | undefined)
         : undefined);
 
-    // 3. 提取消息列表
+    // 3. Extract message list
     const rawMessageList = getByPath(data, parsing.content.messagesPath);
     if (!Array.isArray(rawMessageList)) {
       return { rawMessages: [], title };
     }
 
-    // 4. 排序
+    // 4. Sort
     let sorted = rawMessageList;
     if (parsing.content.sortField) {
       const field = parsing.content.sortField;
@@ -305,17 +305,17 @@ export class ManifestAdapter implements Adapter {
       });
     }
 
-    // 5. 过滤 + 解析每条消息（用 Promise.all 并行处理 extractMessageText）
+    // 5. Filter + parse each message (using Promise.all for parallel extractMessageText)
     const messagePromises = sorted.map(async (rawMsg) => {
-      // 过滤规则
+      // Filter rules
       if (this.shouldSkip(rawMsg)) return null;
 
-      // 角色映射
+      // Role mapping
       const roleValue = getByPath(rawMsg, parsing.role.field);
       const mappedRole = parsing.role.mapping[String(roleValue)];
       if (!mappedRole || mappedRole === "skip") return null;
 
-      // 内容提取（支持异步）
+      // Content extraction (supports async)
       let text: string;
       if (this.hooks.extractMessageText) {
         text = await this.hooks.extractMessageText(rawMsg, ctx);
@@ -331,7 +331,7 @@ export class ManifestAdapter implements Adapter {
     const results = await Promise.all(messagePromises);
     const messages = results.filter(Boolean) as RawMessage[];
 
-    // 6. afterParse 钩子
+    // 6. afterParse hook
     const finalMessages = this.hooks.afterParse
       ? this.hooks.afterParse(messages, ctx)
       : messages;

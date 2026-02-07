@@ -20,7 +20,7 @@ export {
 } from "./base";
 export type { AdapterConfig, ConversationOptions, RawMessage } from "./base";
 
-// 从 manifest entries 自动派生，不再需要 extension-sites.ts
+// Derived automatically from manifest entries; extension-sites.ts is no longer needed
 export const EXTENSION_HOST_PERMISSIONS = builtinManifestEntries.flatMap(
   (e) => e.manifest.urls.hostPermissions,
 );

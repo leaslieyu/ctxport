@@ -1,71 +1,71 @@
-// --- 平台识别 ---
+// --- Platform identification ---
 
 export interface UrlPatternConfig {
-  /** 宿主页面匹配模式（用于 content_scripts.matches） */
+  /** Host page match patterns (used for content_scripts.matches) */
   hostPermissions: string[];
-  /** 宿主页面正则（运行时匹配） */
+  /** Host page regexes (for runtime matching) */
   hostPatterns: RegExp[];
-  /** 会话页面 URL 正则 */
+  /** Conversation page URL regexes */
   conversationUrlPatterns: RegExp[];
 }
 
-// --- 认证配置 ---
+// --- Auth configuration ---
 
 export type AuthMethod = "cookie-session" | "bearer-from-api" | "none";
 
 export interface AuthConfig {
   method: AuthMethod;
-  /** bearer-from-api 模式的 session endpoint */
+  /** Session endpoint for bearer-from-api mode */
   sessionEndpoint?: string;
-  /** 从 session 响应中提取 token 的 JSON path */
+  /** JSON path to extract token from session response */
   tokenPath?: string;
-  /** 从 session 响应中提取过期时间的 JSON path */
+  /** JSON path to extract expiration from session response */
   expiresPath?: string;
-  /** token 缓存 TTL（毫秒），默认 10 分钟 */
+  /** Token cache TTL in milliseconds (default: 10 minutes) */
   tokenTtlMs?: number;
 }
 
-// --- 数据获取配置 ---
+// --- Data fetching configuration ---
 
 export interface ConversationEndpoint {
   /**
-   * URL 模板，支持变量替换：
-   * - {conversationId} -- 从 URL 提取的会话 ID
-   * - {orgId} -- 从 cookie/DOM 提取的组织 ID（可选）
+   * URL template with variable substitution:
+   * - {conversationId} -- conversation ID extracted from URL
+   * - {orgId} -- organization ID extracted from cookie/DOM (optional)
    */
   urlTemplate: string;
   method: "GET" | "POST";
-  /** 额外的请求头 */
+  /** Additional request headers */
   headers?: Record<string, string>;
-  /** query 参数模板 */
+  /** Query parameter templates */
   queryParams?: Record<string, string>;
-  /** POST body 模板 */
+  /** POST body template */
   bodyTemplate?: unknown;
-  /** 请求选项 */
+  /** Request credentials option */
   credentials: "include" | "omit" | "same-origin";
   cache: "default" | "no-store" | "no-cache" | "reload";
   referrerTemplate?: string;
 }
 
-// --- 消息解析规则 ---
+// --- Message parsing rules ---
 
 export interface RoleMapping {
-  /** 从原始数据中哪个字段读取角色 */
+  /** Field path to read the role from raw data */
   field: string;
-  /** 角色值映射：原始值 -> "user" | "assistant" | "skip" */
+  /** Role value mapping: raw value -> "user" | "assistant" | "skip" */
   mapping: Record<string, "user" | "assistant" | "skip">;
 }
 
 export interface ContentExtraction {
-  /** 消息数组的 JSON path，支持 "." 分隔的路径 */
+  /** JSON path to the messages array (dot-separated) */
   messagesPath: string;
-  /** 排序字段的 JSON path（相对于单条消息） */
+  /** JSON path to the sort field (relative to a single message) */
   sortField?: string;
-  /** 排序方向 */
+  /** Sort direction */
   sortOrder?: "asc" | "desc";
-  /** 文本内容的 JSON path（相对于单条消息） */
+  /** JSON path to the text content (relative to a single message) */
   textPath: string;
-  /** 标题的 JSON path（相对于顶层响应） */
+  /** JSON path to the title (relative to the top-level response) */
   titlePath?: string;
 }
 
@@ -74,36 +74,36 @@ export interface MessageParseConfig {
   content: ContentExtraction;
 }
 
-// --- UI 注入配置 ---
+// --- UI injection configuration ---
 
 export interface SelectorFallbacks {
-  /** 按优先级排列的 CSS 选择器列表，匹配到第一个即停止 */
+  /** Priority-ordered list of CSS selectors; stops at the first match */
   selectors: string[];
-  /** 注入位置 */
+  /** Injection position */
   position: "prepend" | "append" | "before" | "after";
 }
 
 export interface ListItemConfig {
-  /** 列表项链接的选择器 */
+  /** CSS selector for list item links */
   linkSelector: string;
-  /** 从 href 中提取会话 ID 的正则（第一个捕获组） */
+  /** Regex to extract conversation ID from href (first capture group) */
   idPattern: RegExp;
-  /** 列表容器选择器（MutationObserver 观察目标） */
+  /** List container selector (MutationObserver target) */
   containerSelector?: string;
 }
 
 export interface InjectionConfig {
-  /** 会话详情页标题栏的复制按钮位置 */
+  /** Copy button placement in the conversation header bar */
   copyButton: SelectorFallbacks;
-  /** 侧边栏列表配置 */
+  /** Sidebar list configuration */
   listItem: ListItemConfig;
-  /** 主内容区选择器（观察 copy button 注入时机） */
+  /** Main content area selector (for observing copy button injection timing) */
   mainContentSelector?: string;
-  /** 侧边栏选择器（观察 list item 注入时机） */
+  /** Sidebar selector (for observing list item injection timing) */
   sidebarSelector?: string;
 }
 
-// --- 主题配置 ---
+// --- Theme configuration ---
 
 export interface ThemeTokens {
   primary: string;
@@ -117,7 +117,7 @@ export interface ThemeConfig {
   dark?: ThemeTokens;
 }
 
-// --- 跳过/过滤规则 ---
+// --- Skip/filter rules ---
 
 export interface SkipRule {
   field: string;
@@ -127,55 +127,55 @@ export interface SkipRule {
 }
 
 export interface MessageFilter {
-  /** 应该跳过的消息条件 */
+  /** Conditions under which a message should be skipped */
   skipWhen?: SkipRule[];
 }
 
-// --- 元数据 ---
+// --- Metadata ---
 
 export interface ManifestMeta {
-  /** 可靠性等级 */
+  /** Reliability level */
   reliability: "high" | "medium" | "low";
-  /** 覆盖范围说明 */
+  /** Coverage description */
   coverage?: string;
-  /** 最后验证日期 */
+  /** Last verified date */
   lastVerified?: string;
-  /** 已知限制 */
+  /** Known limitations */
   knownLimitations?: string[];
 }
 
-// === 顶层 Manifest ===
+// === Top-level Manifest ===
 
 export interface AdapterManifest {
-  /** 唯一标识符 */
+  /** Unique identifier */
   id: string;
-  /** 版本号 */
+  /** Version string */
   version: string;
-  /** 人类可读名称 */
+  /** Human-readable name */
   name: string;
-  /** Provider 标识 */
+  /** Provider identifier */
   provider: string;
 
-  /** 平台识别配置 */
+  /** Platform identification config */
   urls: UrlPatternConfig;
-  /** 认证配置 */
+  /** Auth configuration */
   auth: AuthConfig;
-  /** 会话数据获取端点 */
+  /** Conversation data endpoint */
   endpoint: ConversationEndpoint;
-  /** 消息解析规则 */
+  /** Message parsing rules */
   parsing: MessageParseConfig;
-  /** UI 注入配置 */
+  /** UI injection config */
   injection: InjectionConfig;
-  /** 主题配置 */
+  /** Theme configuration */
   theme: ThemeConfig;
-  /** 消息过滤规则 */
+  /** Message filter rules */
   filters?: MessageFilter;
-  /** 元数据 */
+  /** Metadata */
   meta?: ManifestMeta;
 
   /**
-   * 会话页面 URL 模板，用于从 conversationId 合成 URL。
-   * 例: "https://chatgpt.com/c/{conversationId}"
+   * Conversation page URL template for synthesizing a URL from a conversationId.
+   * Example: "https://chatgpt.com/c/{conversationId}"
    */
   conversationUrlTemplate: string;
 }

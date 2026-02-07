@@ -11,7 +11,7 @@ export interface ManifestEntry {
 const manifests: ManifestEntry[] = [];
 
 /**
- * 从 manifest + hooks 创建并注册 adapter。
+ * Create and register an adapter from a manifest + hooks entry.
  */
 export function registerManifestAdapter(
   entry: ManifestEntry,
@@ -23,7 +23,7 @@ export function registerManifestAdapter(
 }
 
 /**
- * 批量注册。
+ * Register multiple adapters in bulk.
  */
 export function registerManifestAdapters(
   entries: ManifestEntry[],
@@ -32,22 +32,22 @@ export function registerManifestAdapters(
 }
 
 /**
- * 获取所有已注册的 manifest 条目。
+ * Get all registered manifest entries.
  */
 export function getRegisteredManifests(): ManifestEntry[] {
   return [...manifests];
 }
 
 /**
- * 清空所有已注册的 manifest 条目（用于测试）。
+ * Clear all registered manifest entries (for testing).
  */
 export function clearManifests(): void {
   manifests.length = 0;
 }
 
 /**
- * 根据宿主页面 URL 查找匹配的 ManifestAdapter。
- * 用于 extension 侧确定当前平台的 adapter，无需硬编码 provider。
+ * Find a matching ManifestAdapter by host page URL.
+ * Used by the extension to determine the current platform's adapter without hardcoding a provider.
  */
 export function findAdapterByHostUrl(url: string): ManifestAdapter | null {
   for (const entry of manifests) {

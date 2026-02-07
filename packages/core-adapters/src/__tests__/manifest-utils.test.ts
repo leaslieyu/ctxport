@@ -2,63 +2,63 @@ import { describe, it, expect } from "vitest";
 import { getByPath, resolveTemplate } from "../manifest/utils";
 
 describe("getByPath", () => {
-  it("从扁平对象中取值", () => {
+  it("retrieves value from a flat object", () => {
     expect(getByPath({ name: "hello" }, "name")).toBe("hello");
   });
 
-  it("从嵌套对象中取值", () => {
+  it("retrieves value from a nested object", () => {
     const obj = { a: { b: { c: "deep" } } };
     expect(getByPath(obj, "a.b.c")).toBe("deep");
   });
 
-  it("路径不存在时返回 undefined", () => {
+  it("returns undefined when path does not exist", () => {
     expect(getByPath({ a: 1 }, "b")).toBe(undefined);
     expect(getByPath({ a: 1 }, "a.b.c")).toBe(undefined);
   });
 
-  it("obj 为 null/undefined 时返回 undefined", () => {
+  it("returns undefined when obj is null/undefined", () => {
     expect(getByPath(null, "a")).toBe(undefined);
     expect(getByPath(undefined, "a")).toBe(undefined);
   });
 
-  it("中间路径为 null 时返回 undefined", () => {
+  it("returns undefined when intermediate path is null", () => {
     const obj = { a: { b: null } };
     expect(getByPath(obj, "a.b.c")).toBe(undefined);
   });
 
-  it("可以取到数字和布尔值", () => {
+  it("retrieves number and boolean values", () => {
     const obj = { count: 42, active: true };
     expect(getByPath(obj, "count")).toBe(42);
     expect(getByPath(obj, "active")).toBe(true);
   });
 
-  it("可以取到数组", () => {
+  it("retrieves arrays", () => {
     const obj = { items: [1, 2, 3] };
     expect(getByPath(obj, "items")).toEqual([1, 2, 3]);
   });
 
-  it("空路径返回空字符串键的值或 undefined", () => {
+  it("returns value for empty-string key or undefined", () => {
     expect(getByPath({ "": "empty-key" }, "")).toBe("empty-key");
     expect(getByPath({ a: 1 }, "")).toBe(undefined);
   });
 
-  it("中间路径为 undefined 时返回 undefined", () => {
+  it("returns undefined when intermediate path is undefined", () => {
     const obj = { a: { b: undefined } };
     expect(getByPath(obj, "a.b.c")).toBe(undefined);
   });
 
-  it("obj 为非对象原始值时返回 undefined", () => {
+  it("returns undefined when obj is a non-object primitive", () => {
     expect(getByPath(42, "a")).toBe(undefined);
     expect(getByPath("string", "a")).toBe(undefined);
     expect(getByPath(true, "a")).toBe(undefined);
   });
 
-  it("路径中包含不存在的中间节点时返回 undefined", () => {
+  it("returns undefined when intermediate node does not exist", () => {
     const obj = { a: { b: { c: 1 } } };
     expect(getByPath(obj, "a.x.c")).toBe(undefined);
   });
 
-  it("可以取到 falsy 值（0, false, 空字符串）", () => {
+  it("retrieves falsy values (0, false, empty string)", () => {
     const obj = { zero: 0, empty: "", no: false };
     expect(getByPath(obj, "zero")).toBe(0);
     expect(getByPath(obj, "empty")).toBe("");
@@ -67,7 +67,7 @@ describe("getByPath", () => {
 });
 
 describe("resolveTemplate", () => {
-  it("替换单个变量", () => {
+  it("replaces a single variable", () => {
     const result = resolveTemplate(
       "https://api.example.com/{id}",
       { id: "123" },
@@ -75,7 +75,7 @@ describe("resolveTemplate", () => {
     expect(result).toBe("https://api.example.com/123");
   });
 
-  it("替换多个变量", () => {
+  it("replaces multiple variables", () => {
     const result = resolveTemplate(
       "https://api.example.com/{org}/conversations/{id}",
       { org: "my-org", id: "conv-456" },
@@ -85,7 +85,7 @@ describe("resolveTemplate", () => {
     );
   });
 
-  it("对值进行 encodeURIComponent", () => {
+  it("encodes values with encodeURIComponent", () => {
     const result = resolveTemplate(
       "https://api.example.com/{name}",
       { name: "hello world" },
@@ -93,7 +93,7 @@ describe("resolveTemplate", () => {
     expect(result).toBe("https://api.example.com/hello%20world");
   });
 
-  it("替换同一变量的多次出现", () => {
+  it("replaces multiple occurrences of the same variable", () => {
     const result = resolveTemplate(
       "{id}/details/{id}",
       { id: "abc" },
@@ -101,7 +101,7 @@ describe("resolveTemplate", () => {
     expect(result).toBe("abc/details/abc");
   });
 
-  it("无匹配变量时原样返回", () => {
+  it("returns template unchanged when no variables match", () => {
     const result = resolveTemplate(
       "https://api.example.com/static",
       { id: "123" },
@@ -109,16 +109,16 @@ describe("resolveTemplate", () => {
     expect(result).toBe("https://api.example.com/static");
   });
 
-  it("空模板返回空字符串", () => {
+  it("returns empty string for empty template", () => {
     expect(resolveTemplate("", { id: "123" })).toBe("");
   });
 
-  it("空变量对象时原样返回模板", () => {
+  it("returns template unchanged when variables object is empty", () => {
     const result = resolveTemplate("https://api.example.com/{id}", {});
     expect(result).toBe("https://api.example.com/{id}");
   });
 
-  it("特殊字符的值被正确编码", () => {
+  it("correctly encodes special characters in values", () => {
     const result = resolveTemplate(
       "https://api.example.com/{query}",
       { query: "a=1&b=2" },
@@ -126,7 +126,7 @@ describe("resolveTemplate", () => {
     expect(result).toBe("https://api.example.com/a%3D1%26b%3D2");
   });
 
-  it("值包含 Unicode 字符时被正确编码", () => {
+  it("correctly encodes Unicode characters in values", () => {
     const result = resolveTemplate(
       "https://api.example.com/{name}",
       { name: "你好世界" },

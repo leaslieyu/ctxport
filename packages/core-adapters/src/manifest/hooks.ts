@@ -1,61 +1,61 @@
 import type { RawMessage } from "../base";
 
 /**
- * 钩子函数的运行时上下文。
- * 框架注入，钩子只读访问。
+ * Runtime context for hook functions.
+ * Injected by the framework; hooks have read-only access.
  */
 export interface HookContext {
-  /** 当前页面 URL */
+  /** Current page URL */
   url: string;
-  /** 当前页面 document 对象（仅 ext 模式可用） */
+  /** Current page document object (only available in ext mode) */
   document: Document;
-  /** 从 manifest.urls 提取的会话 ID */
+  /** Conversation ID extracted from manifest.urls */
   conversationId: string;
-  /** manifest 中声明的 provider */
+  /** Provider declared in the manifest */
   provider: string;
 }
 
 /**
- * Adapter 生命周期钩子。
- * 所有钩子都是可选的纯函数（或 async 纯函数）。
+ * Adapter lifecycle hooks.
+ * All hooks are optional pure functions (or async pure functions).
  */
 export interface AdapterHooks {
-  // --- 认证阶段 ---
+  // --- Auth phase ---
 
   /**
-   * 从浏览器环境提取认证信息（如 cookie 中的 orgId）。
-   * 返回 key-value 对，会被注入到 URL 模板和请求头中。
+   * Extract auth info from the browser environment (e.g., orgId from cookies).
+   * Returns key-value pairs that are injected into URL templates and request headers.
    */
   extractAuth?: (ctx: HookContext) => Record<string, string> | null;
 
   /**
-   * 在无完整 HookContext 的环境（list-copy-icon, batch-mode）中提取认证信息。
-   * 运行在 content script 中，可以访问 document.cookie 但不需要完整的 HookContext。
-   * 如果未定义，fetchById 会用 globalThis.document 构造最小 HookContext 调用 extractAuth。
+   * Extract auth info in environments without a full HookContext (list-copy-icon, batch-mode).
+   * Runs in the content script and can access document.cookie without a full HookContext.
+   * If not defined, fetchById will construct a minimal HookContext from globalThis.document and call extractAuth.
    */
   extractAuthHeadless?: () => Promise<Record<string, string>> | Record<string, string>;
 
-  // --- 请求阶段 ---
+  // --- Request phase ---
 
   /**
-   * 自定义会话 ID 提取逻辑。
-   * 默认行为：从 URL 中用正则提取。
+   * Custom conversation ID extraction logic.
+   * Default behavior: extract from URL using regex.
    */
   extractConversationId?: (url: string) => string | null;
 
   /**
-   * 自定义请求 URL 构建。
-   * 返回完整 URL 字符串。
+   * Custom request URL builder.
+   * Returns a fully-formed URL string.
    */
   buildRequestUrl?: (
     ctx: HookContext & { templateVars: Record<string, string> },
   ) => string;
 
-  // --- 响应阶段 ---
+  // --- Response phase ---
 
   /**
-   * 在标准解析之前预处理 API 响应。
-   * 用于响应结构 normalize（如 ChatGPT 的 mapping -> linear）。
+   * Pre-process the API response before standard parsing.
+   * Used for response structure normalization (e.g., ChatGPT mapping -> linear).
    */
   transformResponse?: (
     raw: unknown,
@@ -63,8 +63,8 @@ export interface AdapterHooks {
   ) => { data: unknown; title?: string };
 
   /**
-   * 自定义单条消息的文本提取（支持异步）。
-   * 当消息内容结构复杂（如 ChatGPT 的 parts 数组）时使用。
+   * Custom text extraction for a single message (supports async).
+   * Used when message content structure is complex (e.g., ChatGPT's parts array).
    */
   extractMessageText?: (
     rawMessage: unknown,
@@ -72,8 +72,8 @@ export interface AdapterHooks {
   ) => string | Promise<string>;
 
   /**
-   * 在标准解析之后对消息列表做后处理。
-   * 用于合并连续同角色消息、去重等。
+   * Post-process the message list after standard parsing.
+   * Used for merging consecutive same-role messages, deduplication, etc.
    */
   afterParse?: (messages: RawMessage[], ctx: HookContext) => RawMessage[];
 }

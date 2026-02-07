@@ -10,8 +10,8 @@ import {
 } from "./base-injector";
 
 /**
- * 通用 injector：从 manifest.injection 配置驱动 DOM 注入。
- * 替代平台特定的 injector 实现。
+ * Generic injector: drives DOM injection from manifest.injection config.
+ * Replaces platform-specific injector implementations.
  */
 export class ManifestInjector implements PlatformInjector {
   readonly platform: string;

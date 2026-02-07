@@ -1,6 +1,6 @@
 /**
- * 从嵌套对象中按点号路径提取值。
- * 示例：getByPath({ a: { b: "hello" } }, "a.b") -> "hello"
+ * Extract a value from a nested object by dot-separated path.
+ * Example: getByPath({ a: { b: "hello" } }, "a.b") -> "hello"
  */
 export function getByPath(obj: unknown, path: string): unknown {
   const parts = path.split(".");
@@ -13,8 +13,8 @@ export function getByPath(obj: unknown, path: string): unknown {
 }
 
 /**
- * URL 模板简单替换。
- * 将 {key} 替换为对应值（自动 encodeURIComponent）。
+ * Simple URL template substitution.
+ * Replaces {key} with the corresponding value (auto-encodeURIComponent).
  */
 export function resolveTemplate(
   template: string,
