@@ -4,9 +4,6 @@ import { useExtensionUrl } from "~/hooks/use-extension-url";
 import { CopyButton } from "./copy-button";
 import { ListCopyIcon } from "./list-copy-icon";
 import { Toast, type ToastData } from "./toast";
-import { BatchProvider } from "./batch-mode/batch-provider";
-import { BatchBar } from "./batch-mode/batch-bar";
-import { EXTENSION_WINDOW_EVENT } from "~/constants/extension-runtime";
 import { findPlugin, type Plugin } from "@ctxport/core-plugins";
 
 export default function App() {
@@ -48,12 +45,6 @@ export default function App() {
               <ListCopyIcon conversationId={itemId} onToast={showToast} />,
             );
           },
-          renderBatchCheckbox: (_container, _itemId) => {
-            // Batch checkboxes are handled by BatchProvider
-          },
-          removeBatchCheckboxes: () => {
-            // Handled by injector cleanup
-          },
         },
       );
 
@@ -69,48 +60,15 @@ export default function App() {
     };
   }, [url, plugin, showToast]);
 
-  // Listen for keyboard shortcuts via window events
-  useEffect(() => {
-    const handleCopyCurrent = () => {
-      const btn = document.querySelector<HTMLButtonElement>(
-        ".ctxport-copy-btn button",
-      );
-      btn?.click();
-    };
-
-    const handleToggleBatch = () => {
-      window.dispatchEvent(new Event(EXTENSION_WINDOW_EVENT.TOGGLE_BATCH));
-    };
-
-    window.addEventListener(
-      EXTENSION_WINDOW_EVENT.COPY_SUCCESS,
-      handleCopyCurrent,
-    );
-    window.addEventListener(
-      EXTENSION_WINDOW_EVENT.TOGGLE_BATCH,
-      handleToggleBatch,
-    );
-
-    return () => {
-      window.removeEventListener(
-        EXTENSION_WINDOW_EVENT.COPY_SUCCESS,
-        handleCopyCurrent,
-      );
-      window.removeEventListener(
-        EXTENSION_WINDOW_EVENT.TOGGLE_BATCH,
-        handleToggleBatch,
-      );
-    };
-  }, []);
+  // COPY_CURRENT is handled directly by CopyButton via window event listener
 
   return (
-    <BatchProvider>
+    <>
       <Toast data={toast} onDismiss={dismissToast} />
-      <BatchBar onToast={showToast} />
       {showFloatingCopy && plugin && (
         <FloatingCopyButton onToast={showToast} />
       )}
-    </BatchProvider>
+    </>
   );
 }
 

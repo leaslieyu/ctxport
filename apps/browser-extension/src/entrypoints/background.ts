@@ -1,7 +1,11 @@
+import { registerBuiltinPlugins } from "@ctxport/core-plugins";
 import {
   EXTENSION_RUNTIME_MESSAGE,
   isSupportedTabUrl,
 } from "~/constants/extension-runtime";
+
+// Must register plugins before isSupportedTabUrl can work
+registerBuiltinPlugins();
 
 async function sendMessageToTab(
   tabId: number,
@@ -42,10 +46,6 @@ export default defineBackground(() => {
       if (command === "copy-current") {
         await sendMessageToTab(tab.id, {
           type: EXTENSION_RUNTIME_MESSAGE.COPY_CURRENT,
-        });
-      } else if (command === "toggle-batch") {
-        await sendMessageToTab(tab.id, {
-          type: EXTENSION_RUNTIME_MESSAGE.TOGGLE_BATCH,
         });
       }
     })();

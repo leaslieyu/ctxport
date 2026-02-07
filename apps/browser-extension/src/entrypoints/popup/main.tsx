@@ -1,22 +1,21 @@
 import { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
+import { registerBuiltinPlugins, findPlugin } from "@ctxport/core-plugins";
 import {
   EXTENSION_RUNTIME_MESSAGE,
   isSupportedTabUrl,
 } from "~/constants/extension-runtime";
 
+// Must register plugins before isSupportedTabUrl can work
+registerBuiltinPlugins();
+
 const FONT_STACK =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 const MOTION = {
-  instant: "100ms",
   fast: "150ms",
-  normal: "250ms",
-  smooth: "350ms",
   easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
-  easeIn: "cubic-bezier(0.55, 0, 1, 0.45)",
   spring: "cubic-bezier(0.34, 1.56, 0.64, 1)",
-  springSubtle: "cubic-bezier(0.22, 1.2, 0.36, 1)",
 } as const;
 
 function useIsDark(): boolean {
@@ -30,6 +29,47 @@ function useIsDark(): boolean {
     return () => mq.removeEventListener("change", handler);
   }, []);
   return dark;
+}
+
+type TabState =
+  | { kind: "loading" }
+  | { kind: "unsupported" }
+  | { kind: "supported"; tabId: number; platformName: string };
+
+function useActiveTab(): TabState {
+  const [state, setState] = useState<TabState>({ kind: "loading" });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const tabs = await browser.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        const tab = tabs[0];
+        if (!tab?.id || !tab.url) {
+          setState({ kind: "unsupported" });
+          return;
+        }
+
+        if (!isSupportedTabUrl(tab.url)) {
+          setState({ kind: "unsupported" });
+          return;
+        }
+
+        const plugin = findPlugin(tab.url);
+        setState({
+          kind: "supported",
+          tabId: tab.id,
+          platformName: plugin?.name ?? "AI Chat",
+        });
+      } catch {
+        setState({ kind: "unsupported" });
+      }
+    })();
+  }, []);
+
+  return state;
 }
 
 /* ---- Icons (16x16) ---- */
@@ -52,26 +92,6 @@ function ClipboardIcon() {
   );
 }
 
-function ChecklistIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="5" width="6" height="6" rx="1" />
-      <path d="M13 8h8" />
-      <rect x="3" y="13" width="6" height="6" rx="1" />
-      <path d="M13 16h8" />
-    </svg>
-  );
-}
-
 function LogoIcon({ dark }: { dark: boolean }) {
   return (
     <svg
@@ -90,76 +110,27 @@ function LogoIcon({ dark }: { dark: boolean }) {
   );
 }
 
-/* ---- Kbd component ---- */
-
-function Kbd({
-  children,
-  dark,
-}: {
-  children: React.ReactNode;
-  dark: boolean;
-}) {
-  return (
-    <kbd
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 3,
-        fontSize: 10,
-        fontFamily: FONT_STACK,
-        fontWeight: 500,
-        color: dark ? "#9ca3af" : "#6b7280",
-        backgroundColor: dark
-          ? "rgba(255, 255, 255, 0.06)"
-          : "rgba(0, 0, 0, 0.04)",
-        padding: "2px 5px",
-        borderRadius: 4,
-        border: dark
-          ? "1px solid rgba(255, 255, 255, 0.08)"
-          : "1px solid rgba(0, 0, 0, 0.06)",
-      }}
-    >
-      {children}
-    </kbd>
-  );
-}
-
 /* ---- Popup ---- */
 
 function Popup() {
   const dark = useIsDark();
+  const tabState = useActiveTab();
   const [primaryHover, setPrimaryHover] = useState(false);
   const [primaryActive, setPrimaryActive] = useState(false);
-  const [secondaryHover, setSecondaryHover] = useState(false);
-  const [secondaryActive, setSecondaryActive] = useState(false);
 
   const handleCopyCurrent = async () => {
-    const tabs = await browser.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    const tab = tabs[0];
-    if (!tab?.id || !isSupportedTabUrl(tab.url)) return;
-
-    await browser.tabs.sendMessage(tab.id, {
-      type: EXTENSION_RUNTIME_MESSAGE.COPY_CURRENT,
-    });
+    if (tabState.kind !== "supported") return;
+    try {
+      await browser.tabs.sendMessage(tabState.tabId, {
+        type: EXTENSION_RUNTIME_MESSAGE.COPY_CURRENT,
+      });
+    } catch {
+      // Content script not ready
+    }
     window.close();
   };
 
-  const handleToggleBatch = async () => {
-    const tabs = await browser.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    const tab = tabs[0];
-    if (!tab?.id || !isSupportedTabUrl(tab.url)) return;
-
-    await browser.tabs.sendMessage(tab.id, {
-      type: EXTENSION_RUNTIME_MESSAGE.TOGGLE_BATCH,
-    });
-    window.close();
-  };
+  const isSupported = tabState.kind === "supported";
 
   return (
     <div
@@ -204,129 +175,177 @@ function Popup() {
         Copy AI conversations as Context Bundles.
       </p>
 
-      {/* Action Buttons */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {/* Primary: Copy Current */}
-        <button
-          type="button"
-          onClick={handleCopyCurrent}
-          onMouseEnter={() => setPrimaryHover(true)}
-          onMouseLeave={() => {
-            setPrimaryHover(false);
-            setPrimaryActive(false);
-          }}
-          onMouseDown={() => setPrimaryActive(true)}
-          onMouseUp={() => setPrimaryActive(false)}
+      {/* Content area — changes based on tab state */}
+      {tabState.kind === "loading" ? (
+        <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            width: "100%",
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: "none",
-            backgroundColor: primaryHover ? "#1d4ed8" : "#2563eb",
-            color: "#ffffff",
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer",
-            textAlign: "left",
-            transform: primaryActive ? "scale(0.97)" : "scale(1)",
-            transition: `background-color ${MOTION.fast} ${MOTION.easeOut}, transform ${MOTION.fast} ${MOTION.spring}`,
+            textAlign: "center",
+            padding: "12px 0",
+            fontSize: 12,
+            color: dark ? "#6b7280" : "#9ca3af",
           }}
         >
-          <ClipboardIcon />
-          Copy Current Conversation
-        </button>
+          Checking...
+        </div>
+      ) : !isSupported ? (
+        <UnsupportedState dark={dark} />
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* Primary: Copy Current */}
+          <button
+            type="button"
+            onClick={handleCopyCurrent}
+            onMouseEnter={() => setPrimaryHover(true)}
+            onMouseLeave={() => {
+              setPrimaryHover(false);
+              setPrimaryActive(false);
+            }}
+            onMouseDown={() => setPrimaryActive(true)}
+            onMouseUp={() => setPrimaryActive(false)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              width: "100%",
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "none",
+              backgroundColor: primaryHover ? "#1d4ed8" : "#2563eb",
+              color: "#ffffff",
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: FONT_STACK,
+              cursor: "pointer",
+              textAlign: "left",
+              transform: primaryActive ? "scale(0.97)" : "scale(1)",
+              transition: `background-color ${MOTION.fast} ${MOTION.easeOut}, transform ${MOTION.fast} ${MOTION.spring}`,
+            }}
+          >
+            <ClipboardIcon />
+            Copy Current Conversation
+          </button>
 
-        {/* Secondary: Batch Mode */}
-        <button
-          type="button"
-          onClick={handleToggleBatch}
-          onMouseEnter={() => setSecondaryHover(true)}
-          onMouseLeave={() => {
-            setSecondaryHover(false);
-            setSecondaryActive(false);
-          }}
-          onMouseDown={() => setSecondaryActive(true)}
-          onMouseUp={() => setSecondaryActive(false)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            width: "100%",
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: dark
-              ? "1px solid rgba(255, 255, 255, 0.12)"
-              : "1px solid rgba(0, 0, 0, 0.10)",
-            backgroundColor: secondaryHover
-              ? dark
-                ? "rgba(255, 255, 255, 0.04)"
-                : "rgba(0, 0, 0, 0.03)"
-              : "transparent",
-            borderColor: secondaryHover
-              ? dark
-                ? "rgba(255, 255, 255, 0.18)"
-                : "rgba(0, 0, 0, 0.15)"
-              : undefined,
-            color: dark ? "#d1d5db" : "#374151",
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: "pointer",
-            textAlign: "left",
-            transform: secondaryActive ? "scale(0.97)" : "scale(1)",
-            transition: `background-color ${MOTION.fast} ${MOTION.easeOut}, border-color ${MOTION.fast} ${MOTION.easeOut}, transform ${MOTION.fast} ${MOTION.spring}`,
-          }}
-        >
-          <ChecklistIcon />
-          Batch Selection Mode
-        </button>
-      </div>
+          {/* Platform indicator */}
+          <div
+            style={{
+              marginTop: 4,
+              fontSize: 11,
+              color: dark ? "#4b5563" : "#d1d5db",
+              textAlign: "center",
+            }}
+          >
+            {tabState.platformName} detected
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
-      {/* Keyboard Shortcuts Footer */}
+/* ---- Unsupported site state ---- */
+
+function UnsupportedState({ dark }: { dark: boolean }) {
+  const platforms = [
+    "ChatGPT",
+    "Claude",
+    "Gemini",
+    "DeepSeek",
+    "Grok",
+    "GitHub Issues & PRs",
+  ];
+
+  return (
+    <div>
       <div
         style={{
-          marginTop: 20,
-          paddingTop: 14,
+          textAlign: "center",
+          padding: "8px 0 16px",
+        }}
+      >
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={dark ? "#4b5563" : "#d1d5db"}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ margin: "0 auto 8px" }}
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M8 15h8" />
+          <circle cx="9" cy="9" r="1" fill={dark ? "#4b5563" : "#d1d5db"} stroke="none" />
+          <circle cx="15" cy="9" r="1" fill={dark ? "#4b5563" : "#d1d5db"} stroke="none" />
+        </svg>
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: dark ? "#9ca3af" : "#6b7280",
+            margin: "0 0 4px",
+          }}
+        >
+          Not on a supported page
+        </p>
+        <p
+          style={{
+            fontSize: 11,
+            color: dark ? "#6b7280" : "#9ca3af",
+            margin: 0,
+            lineHeight: 1.4,
+          }}
+        >
+          Open an AI conversation to use CtxPort.
+        </p>
+      </div>
+
+      <div
+        style={{
           borderTop: dark
             ? "1px solid rgba(255, 255, 255, 0.08)"
             : "1px solid rgba(0, 0, 0, 0.06)",
+          paddingTop: 12,
         }}
       >
+        <p
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            color: dark ? "#4b5563" : "#d1d5db",
+            margin: "0 0 6px",
+          }}
+        >
+          Supported platforms
+        </p>
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: 11,
-            color: dark ? "#6b7280" : "#9ca3af",
-            lineHeight: 2,
+            flexWrap: "wrap",
+            gap: 4,
           }}
         >
-          <span>Copy current</span>
-          <span style={{ display: "flex", gap: 3 }}>
-            <Kbd dark={dark}>Cmd</Kbd>
-            <Kbd dark={dark}>Shift</Kbd>
-            <Kbd dark={dark}>C</Kbd>
-          </span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: 11,
-            color: dark ? "#6b7280" : "#9ca3af",
-            lineHeight: 2,
-          }}
-        >
-          <span>Batch mode</span>
-          <span style={{ display: "flex", gap: 3 }}>
-            <Kbd dark={dark}>Cmd</Kbd>
-            <Kbd dark={dark}>Shift</Kbd>
-            <Kbd dark={dark}>E</Kbd>
-          </span>
+          {platforms.map((name) => (
+            <span
+              key={name}
+              style={{
+                fontSize: 11,
+                color: dark ? "#6b7280" : "#9ca3af",
+                backgroundColor: dark
+                  ? "rgba(255, 255, 255, 0.04)"
+                  : "rgba(0, 0, 0, 0.03)",
+                padding: "2px 8px",
+                borderRadius: 4,
+                border: dark
+                  ? "1px solid rgba(255, 255, 255, 0.06)"
+                  : "1px solid rgba(0, 0, 0, 0.04)",
+              }}
+            >
+              {name}
+            </span>
+          ))}
         </div>
       </div>
     </div>

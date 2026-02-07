@@ -4,14 +4,13 @@ export const CTXPORT_COMPONENT_NAME = "ctxport-root";
 
 export const EXTENSION_RUNTIME_MESSAGE = {
   COPY_CURRENT: "ctxport:copy-current",
-  TOGGLE_BATCH: "ctxport:toggle-batch",
 } as const;
 
 export const EXTENSION_WINDOW_EVENT = {
   URL_CHANGE: "ctxport:url-change",
+  COPY_CURRENT: "ctxport:copy-current-window",
   COPY_SUCCESS: "ctxport:copy-success",
   COPY_ERROR: "ctxport:copy-error",
-  TOGGLE_BATCH: "ctxport:toggle-batch",
 } as const;
 
 export type ExtensionRuntimeMessageType =

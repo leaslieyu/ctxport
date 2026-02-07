@@ -20,17 +20,10 @@ export default defineConfig({
     commands: {
       "copy-current": {
         suggested_key: {
-          default: "Ctrl+Shift+C",
-          mac: "Command+Shift+C",
+          default: "Alt+Shift+C",
+          mac: "Alt+Shift+C",
         },
         description: "Copy current conversation",
-      },
-      "toggle-batch": {
-        suggested_key: {
-          default: "Ctrl+Shift+E",
-          mac: "Command+Shift+E",
-        },
-        description: "Toggle batch selection mode",
       },
     },
   },

@@ -14,10 +14,6 @@ export interface InjectorCallbacks {
   renderCopyButton: (container: HTMLElement) => void;
   /** Render list copy icon into the given container */
   renderListIcon: (container: HTMLElement, itemId: string) => void;
-  /** Render batch checkbox into the given container */
-  renderBatchCheckbox: (container: HTMLElement, itemId: string) => void;
-  /** Remove all batch checkboxes */
-  removeBatchCheckboxes: () => void;
 }
 
 /** UI injector — plugin decides how to inject UI elements into the host page */
@@ -54,7 +50,7 @@ export interface Plugin {
   /** From current page, extract content into a ContentBundle */
   extract: (ctx: PluginContext) => Promise<ContentBundle>;
 
-  /** Fetch content by ID (sidebar list copy, batch mode). Not all plugins need this. */
+  /** Fetch content by ID (sidebar list copy). Not all plugins need this. */
   fetchById?: (id: string) => Promise<ContentBundle>;
 
   /** UI injector — how to place copy buttons etc. on the page */

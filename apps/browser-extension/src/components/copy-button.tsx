@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useCopyConversation, type CopyState } from "~/hooks/use-copy-conversation";
+import { EXTENSION_WINDOW_EVENT } from "~/constants/extension-runtime";
 import { ContextMenu } from "./context-menu";
 import type { BundleFormatType } from "@ctxport/core-markdown";
 
@@ -28,6 +29,15 @@ export function CopyButton({ onToast }: CopyButtonProps) {
 
   const handleClick = useCallback(async () => {
     await copy("full");
+  }, [copy]);
+
+  // Respond to COPY_CURRENT window event (from popup / keyboard shortcut)
+  useEffect(() => {
+    const handler = () => {
+      void copy("full");
+    };
+    window.addEventListener(EXTENSION_WINDOW_EVENT.COPY_CURRENT, handler);
+    return () => window.removeEventListener(EXTENSION_WINDOW_EVENT.COPY_CURRENT, handler);
   }, [copy]);
 
   const handleContextMenu = useCallback(

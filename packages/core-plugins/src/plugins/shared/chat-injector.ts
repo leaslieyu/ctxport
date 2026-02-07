@@ -57,13 +57,12 @@ function debouncedObserverCallback(fn: () => void): () => void {
 }
 
 /**
- * Create a PluginInjector for AI chat platforms (ChatGPT, Claude).
- * Handles copy button, list icons, and batch checkboxes via MutationObserver.
+ * Create a PluginInjector for AI chat platforms.
+ * Handles copy button and list icons via MutationObserver.
  */
 export function createChatInjector(config: ChatInjectorConfig): PluginInjector {
   const copyBtnClass = `ctxport-${config.platform}-copy-btn`;
   const listIconClass = `ctxport-${config.platform}-list-icon`;
-  const batchCbClass = `ctxport-${config.platform}-batch-cb`;
 
   let observers: MutationObserver[] = [];
   let timers: ReturnType<typeof setTimeout>[] = [];
@@ -153,33 +152,6 @@ export function createChatInjector(config: ChatInjectorConfig): PluginInjector {
     }
   }
 
-  function tryInjectBatchCheckboxes(): void {
-    if (!callbacks) return;
-
-    const links = document.querySelectorAll<HTMLAnchorElement>(
-      config.listItemLinkSelector,
-    );
-
-    for (const link of links) {
-      if (isInjected(link, "batch-cb")) continue;
-
-      const href = link.getAttribute("href");
-      if (!href) continue;
-      const match = config.listItemIdPattern.exec(href);
-      const id = match?.[1];
-      if (!id) continue;
-
-      const container = createContainer(`ctxport-batch-cb-${id}`);
-      container.className = batchCbClass;
-      container.style.marginRight = "4px";
-      container.style.flexShrink = "0";
-
-      link.insertBefore(container, link.firstChild);
-      markInjected(link, "batch-cb");
-      callbacks.renderBatchCheckbox(container, id);
-    }
-  }
-
   return {
     inject(_ctx: PluginContext, cbs: InjectorCallbacks) {
       callbacks = cbs;
@@ -212,9 +184,6 @@ export function createChatInjector(config: ChatInjectorConfig): PluginInjector {
       }, INJECTION_DELAY_MS);
       timers.push(listTimer);
 
-      // Batch checkboxes (observed on sidebar too, activated via callback)
-      // Note: batch checkboxes are injected on demand via renderBatchCheckbox callback
-      // The sidebar observer above handles re-injection on DOM changes
     },
 
     cleanup() {
@@ -224,7 +193,6 @@ export function createChatInjector(config: ChatInjectorConfig): PluginInjector {
       timers = [];
       removeAllByClass(copyBtnClass);
       removeAllByClass(listIconClass);
-      removeAllByClass(batchCbClass);
       callbacks = null;
     },
   };
