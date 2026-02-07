@@ -55,13 +55,11 @@ const zh: LocaleMessages = {
   "web.home.problem.scenario":
     "你刚花了 45 分钟和 ChatGPT 深度对话，现在需要交给 Claude 来实现。怎么办？",
   "web.home.problem.ctrlC.title": "Ctrl+A, Ctrl+C",
-  "web.home.problem.ctrlC.desc":
-    "HTML 残留、格式错乱、到处都是隐藏字符。",
+  "web.home.problem.ctrlC.desc": "HTML 残留、格式错乱、到处都是隐藏字符。",
   "web.home.problem.manual.title": "逐条手动复制",
   "web.home.problem.manual.desc": "人生苦短，47 条消息一条条复制？",
   "web.home.problem.screenshot.title": "截图",
-  "web.home.problem.screenshot.desc":
-    "知识的坟墓——搜不到、粘不了、毫无用处。",
+  "web.home.problem.screenshot.desc": "知识的坟墓——搜不到、粘不了、毫无用处。",
 
   // ─── 首页：对比 ───
   "web.home.compare.title": "使用前后对比",
@@ -87,7 +85,8 @@ const zh: LocaleMessages = {
   "web.home.trust.zeroUpload.title": "零数据上传",
   "web.home.trust.zeroUpload.desc": "你的对话永远不会离开你的设备。绝对不会。",
   "web.home.trust.local.title": "100% 本地",
-  "web.home.trust.local.desc": "没有服务器、没有云端、没有数据追踪。一切都在你的设备上。",
+  "web.home.trust.local.desc":
+    "没有服务器、没有云端、没有数据追踪。一切都在你的设备上。",
   "web.home.trust.permissions.title": "最小权限",
   "web.home.trust.permissions.desc": "只申请 AI 平台域名的访问权限，仅此而已。",
   "web.home.trust.openSource.title": "开源",
@@ -101,7 +100,8 @@ const zh: LocaleMessages = {
   "web.home.how.step2.title": "点击",
   "web.home.how.step2.desc": "点击对话中的复制按钮，或用侧边栏列表免打开复制。",
   "web.home.how.step3.title": "粘贴",
-  "web.home.how.step3.desc": "把结构化 Markdown 粘贴到任意 AI 工具、编辑器或笔记应用。",
+  "web.home.how.step3.desc":
+    "把结构化 Markdown 粘贴到任意 AI 工具、编辑器或笔记应用。",
 
   // ─── 首页：功能特性 ───
   "web.home.features.title": "功能特性",
@@ -113,8 +113,7 @@ const zh: LocaleMessages = {
     "直接从侧边栏列表复制任意对话——不用打开它。高效用户的杀手级功能。",
   "web.home.features.sidebar.badge": "独家",
   "web.home.features.keyboard.title": "快捷键",
-  "web.home.features.keyboard.desc":
-    "按 Alt+Shift+C 即可立即复制当前对话。",
+  "web.home.features.keyboard.desc": "按 Alt+Shift+C 即可立即复制当前对话。",
   "web.home.features.format.title": "Context Bundle 格式",
   "web.home.features.format.desc":
     "输出带 YAML frontmatter 的结构化 Markdown——标题、来源、平台、时间戳，所有元数据完整保留。",

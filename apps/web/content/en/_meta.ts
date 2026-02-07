@@ -1,3 +1,5 @@
+import type { MetaRecord } from "nextra";
+
 export default {
   index: { title: "Documentation" },
   "getting-started": { title: "Getting Started" },
@@ -6,4 +8,4 @@ export default {
   "supported-platforms": { title: "Supported Platforms" },
   "keyboard-shortcuts": { title: "Keyboard Shortcuts" },
   faq: { title: "FAQ" },
-}
+} satisfies MetaRecord;

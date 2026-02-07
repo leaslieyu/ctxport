@@ -1,3 +1,5 @@
+import type { MetaRecord } from "nextra";
+
 export default {
   index: { title: "文档" },
   "getting-started": { title: "快速开始" },
@@ -6,4 +8,4 @@ export default {
   "supported-platforms": { title: "支持平台" },
   "keyboard-shortcuts": { title: "键盘快捷键" },
   faq: { title: "常见问题" },
-}
+} satisfies MetaRecord;
