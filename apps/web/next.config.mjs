@@ -47,9 +47,7 @@ const config = {
     locales,
     defaultLocale,
   },
-  transpilePackages: [
-    "@ctxport/shared-ui",
-  ],
+  transpilePackages: ["@ctxport/shared-ui"],
   // Required for image optimization
   images: {
     unoptimized: true,
