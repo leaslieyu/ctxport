@@ -1,10 +1,10 @@
 import { useState, useCallback } from "react";
-import { findAdapterByHostUrl } from "@ctxport/core-adapters/manifest";
+import { findPlugin } from "@ctxport/core-plugins";
 import {
   serializeBundle,
   type BundleFormatType,
 } from "@ctxport/core-markdown";
-import type { Conversation } from "@ctxport/core-schema";
+import type { ContentBundle } from "@ctxport/core-schema";
 import { writeToClipboard } from "~/lib/utils";
 
 export type BatchState = "normal" | "selecting" | "copying" | "success" | "partial-fail";
@@ -60,19 +60,19 @@ export function useBatchMode() {
       const ids = Array.from(selected);
       setProgress({ current: 0, total: ids.length });
 
-      const adapter = findAdapterByHostUrl(window.location.href);
-      if (!adapter) {
+      const plugin = findPlugin(window.location.href);
+      if (!plugin?.fetchById) {
         setState("normal");
         return;
       }
 
-      const conversations: Conversation[] = [];
+      const bundles: ContentBundle[] = [];
       let failed = 0;
 
       for (let i = 0; i < ids.length; i++) {
         try {
-          const conv = await adapter.fetchById(ids[i]!);
-          conversations.push(conv);
+          const bundle = await plugin.fetchById(ids[i]!);
+          bundles.push(bundle);
         } catch {
           failed++;
         }
@@ -80,13 +80,13 @@ export function useBatchMode() {
         setProgress({ current: i + 1, total: ids.length });
       }
 
-      if (conversations.length > 0) {
-        const serialized = serializeBundle(conversations, { format });
+      if (bundles.length > 0) {
+        const serialized = serializeBundle(bundles, { format });
         await writeToClipboard(serialized.markdown);
 
         setResult({
           total: ids.length,
-          succeeded: conversations.length,
+          succeeded: bundles.length,
           failed,
           messageCount: serialized.messageCount,
           estimatedTokens: serialized.estimatedTokens,

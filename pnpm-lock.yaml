@@ -53,12 +53,12 @@ importers:
 
   apps/browser-extension:
     dependencies:
-      '@ctxport/core-adapters':
-        specifier: workspace:*
-        version: link:../../packages/core-adapters
       '@ctxport/core-markdown':
         specifier: workspace:*
         version: link:../../packages/core-markdown
+      '@ctxport/core-plugins':
+        specifier: workspace:*
+        version: link:../../packages/core-plugins
       '@ctxport/core-schema':
         specifier: workspace:*
         version: link:../../packages/core-schema
@@ -112,17 +112,11 @@ importers:
         specifier: ^0.20.13
         version: 0.20.14(@types/node@25.2.1)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.57.1)
 
-  packages/core-adapters:
+  packages/core-markdown:
     dependencies:
       '@ctxport/core-schema':
         specifier: workspace:*
         version: link:../core-schema
-      uuid:
-        specifier: ^13.0.0
-        version: 13.0.0
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
     devDependencies:
       '@types/node':
         specifier: catalog:tooling
@@ -137,11 +131,14 @@ importers:
         specifier: catalog:tooling
         version: 4.0.18(@types/node@25.2.1)(jiti@2.6.1)(lightningcss@1.30.2)
 
-  packages/core-markdown:
+  packages/core-plugins:
     dependencies:
       '@ctxport/core-schema':
         specifier: workspace:*
         version: link:../core-schema
+      uuid:
+        specifier: ^13.0.0
+        version: 13.0.0
     devDependencies:
       '@types/node':
         specifier: catalog:tooling

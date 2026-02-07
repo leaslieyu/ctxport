@@ -60,10 +60,9 @@ export interface MessageNode {
   children?: string[];
 }
 
-export interface ShareData {
+export interface ChatGPTConversationResponse {
+  conversation_id?: string;
   title?: string;
-  model?: { slug?: string };
-  update_time?: number;
   mapping?: Record<string, MessageNode>;
-  linear_conversation?: Array<{ id?: string }>;
+  current_node?: string;
 }

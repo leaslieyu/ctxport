@@ -1,4 +1,4 @@
-import { EXTENSION_HOST_PATTERNS } from "@ctxport/core-adapters";
+import { getAllPlugins } from "@ctxport/core-plugins";
 
 export const CTXPORT_COMPONENT_NAME = "ctxport-root";
 
@@ -14,12 +14,10 @@ export const EXTENSION_WINDOW_EVENT = {
   TOGGLE_BATCH: "ctxport:toggle-batch",
 } as const;
 
-export const SUPPORTED_HOST_PATTERNS = EXTENSION_HOST_PATTERNS;
-
 export type ExtensionRuntimeMessageType =
   (typeof EXTENSION_RUNTIME_MESSAGE)[keyof typeof EXTENSION_RUNTIME_MESSAGE];
 
 export function isSupportedTabUrl(url?: string): boolean {
   if (!url) return false;
-  return SUPPORTED_HOST_PATTERNS.some((pattern) => pattern.test(url));
+  return getAllPlugins().some((p) => p.urls.match(url));
 }

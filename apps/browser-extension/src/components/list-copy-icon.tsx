@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { findAdapterByHostUrl } from "@ctxport/core-adapters/manifest";
+import { findPlugin } from "@ctxport/core-plugins";
 import {
   serializeConversation,
   type BundleFormatType,
@@ -34,11 +34,11 @@ export function ListCopyIcon({
       setState("loading");
 
       try {
-        const adapter = findAdapterByHostUrl(window.location.href);
-        if (!adapter) throw new Error("No adapter found for current page");
+        const plugin = findPlugin(window.location.href);
+        if (!plugin?.fetchById) throw new Error("No plugin found for current page");
 
-        const conv = await adapter.fetchById(conversationId);
-        const serialized = serializeConversation(conv, { format });
+        const bundle = await plugin.fetchById(conversationId);
+        const serialized = serializeConversation(bundle, { format });
         await writeToClipboard(serialized.markdown);
 
         if (!mountedRef.current) return;

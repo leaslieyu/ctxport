@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { parseWithAdapters, registerBuiltinAdapters } from "@ctxport/core-adapters";
+import { findPlugin } from "@ctxport/core-plugins";
 import { serializeConversation, type BundleFormatType } from "@ctxport/core-markdown";
 import { writeToClipboard } from "~/lib/utils";
 
@@ -8,15 +8,6 @@ export type CopyState = "idle" | "loading" | "success" | "error";
 export interface CopyResult {
   messageCount: number;
   estimatedTokens: number;
-}
-
-let adaptersRegistered = false;
-
-function ensureAdapters() {
-  if (!adaptersRegistered) {
-    registerBuiltinAdapters();
-    adaptersRegistered = true;
-  }
 }
 
 export function useCopyConversation() {
@@ -31,17 +22,15 @@ export function useCopyConversation() {
       setResult(null);
 
       try {
-        ensureAdapters();
+        const plugin = findPlugin(window.location.href);
+        if (!plugin) throw new Error("No plugin for this page");
 
-        const parseResult = await parseWithAdapters({
-          type: "ext",
-          document: document,
+        const bundle = await plugin.extract({
           url: window.location.href,
+          document,
         });
 
-        const serialized = serializeConversation(parseResult.conversation, {
-          format,
-        });
+        const serialized = serializeConversation(bundle, { format });
 
         await writeToClipboard(serialized.markdown);
 

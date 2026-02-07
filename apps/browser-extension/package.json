@@ -19,7 +19,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ctxport/core-adapters": "workspace:*",
+    "@ctxport/core-plugins": "workspace:*",
     "@ctxport/core-markdown": "workspace:*",
     "@ctxport/core-schema": "workspace:*",
     "clsx": "^2.1.1",

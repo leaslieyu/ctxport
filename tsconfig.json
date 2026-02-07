@@ -2,7 +2,7 @@
   "files": [],
   "references": [
     { "path": "./packages/core-schema" },
-    { "path": "./packages/core-adapters" },
+    { "path": "./packages/core-plugins" },
     { "path": "./packages/core-markdown" },
     { "path": "./apps/browser-extension" }
   ]

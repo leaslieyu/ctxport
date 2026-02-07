@@ -1,5 +1,5 @@
-import type { Conversation } from "@ctxport/core-schema";
-import { filterMessages, type BundleFormatType } from "./formats";
+import type { ContentBundle } from "@ctxport/core-schema";
+import { filterNodes, type BundleFormatType } from "./formats";
 import { estimateTokens, formatTokenCount } from "./token-estimator";
 
 export interface SerializeOptions {
@@ -32,35 +32,35 @@ function buildFrontmatter(meta: Record<string, string | number>): string {
 }
 
 export function serializeConversation(
-  conversation: Conversation,
+  bundle: ContentBundle,
   options: SerializeOptions = {},
 ): SerializeResult {
   const { format = "full", includeFrontmatter = true } = options;
 
-  const messageParts = filterMessages(conversation.messages, format);
+  const messageParts = filterNodes(bundle.nodes, bundle.participants, format);
   const body = messageParts.join("\n\n");
 
-  const messageCount = conversation.messages.length;
+  const messageCount = bundle.nodes.length;
   const tokens = estimateTokens(body);
 
   const sections: string[] = [];
 
   if (includeFrontmatter) {
     const meta: Record<string, string | number> = {
-      ctxport: "v1",
+      ctxport: "v2",
     };
 
-    if (conversation.sourceMeta?.provider) {
-      meta.source = conversation.sourceMeta.provider;
+    if (bundle.source.platform) {
+      meta.source = bundle.source.platform;
     }
-    if (conversation.sourceMeta?.url) {
-      meta.url = conversation.sourceMeta.url;
+    if (bundle.source.url) {
+      meta.url = bundle.source.url;
     }
-    if (conversation.title) {
-      meta.title = conversation.title;
+    if (bundle.title) {
+      meta.title = bundle.title;
     }
-    meta.date = conversation.createdAt ?? new Date().toISOString();
-    meta.messages = messageCount;
+    meta.date = bundle.source.extractedAt ?? new Date().toISOString();
+    meta.nodes = messageCount;
     meta.tokens = formatTokenCount(tokens);
     meta.format = format;
 
@@ -77,22 +77,22 @@ export function serializeConversation(
 }
 
 export function serializeBundle(
-  conversations: Conversation[],
+  bundles: ContentBundle[],
   options: SerializeOptions = {},
 ): SerializeResult {
   const { format = "full", includeFrontmatter = true } = options;
 
-  const total = conversations.length;
+  const total = bundles.length;
   const allParts: string[] = [];
   let totalMessageCount = 0;
 
-  for (let i = 0; i < conversations.length; i++) {
-    const conv = conversations[i]!;
-    const messageParts = filterMessages(conv.messages, format);
-    const title = conv.title ?? "Untitled";
-    const source = conv.sourceMeta?.provider ?? "unknown";
-    const msgCount = conv.messages.length;
-    const url = conv.sourceMeta?.url ?? "";
+  for (let i = 0; i < bundles.length; i++) {
+    const bundle = bundles[i]!;
+    const messageParts = filterNodes(bundle.nodes, bundle.participants, format);
+    const title = bundle.title ?? "Untitled";
+    const source = bundle.source.platform ?? "unknown";
+    const msgCount = bundle.nodes.length;
+    const url = bundle.source.url ?? "";
 
     totalMessageCount += msgCount;
 
@@ -109,7 +109,7 @@ export function serializeBundle(
 
   if (includeFrontmatter) {
     const meta: Record<string, string | number> = {
-      ctxport: "v1",
+      ctxport: "v2",
       bundle: "merged" as string,
       conversations: total,
       date: new Date().toISOString(),

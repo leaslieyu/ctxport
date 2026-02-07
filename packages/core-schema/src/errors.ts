@@ -30,14 +30,14 @@ export const AppError = z
 export type AppError = z.infer<typeof AppError>;
 
 export const ERROR_MESSAGES: Record<ErrorCode, string> = {
-  "E-PARSE-001": "Cannot find a parser for this page",
-  "E-PARSE-002": "Page structure has changed, parser needs update",
-  "E-PARSE-005": "No messages found in conversation",
+  "E-PARSE-001": "Cannot find a plugin for this page",
+  "E-PARSE-002": "Page structure has changed, plugin needs update",
+  "E-PARSE-005": "No content found",
   "E-PARSE-006": "Invalid input format",
   "E-PARSE-007": "Rate limited, please try again later",
-  "E-BUNDLE-001": "Failed to serialize conversation to Markdown",
+  "E-BUNDLE-001": "Failed to serialize content to Markdown",
   "E-BUNDLE-002": "Failed to write to clipboard",
-  "E-BUNDLE-003": "Some conversations failed to copy",
+  "E-BUNDLE-003": "Some items failed to copy",
 };
 
 export function createAppError(code: ErrorCode, detail?: string): AppError {

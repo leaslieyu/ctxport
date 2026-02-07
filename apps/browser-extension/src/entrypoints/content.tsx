@@ -1,6 +1,6 @@
 import "./styles/globals.css";
 
-import { EXTENSION_CONTENT_MATCHES, registerBuiltinAdapters } from "@ctxport/core-adapters";
+import { EXTENSION_HOST_PERMISSIONS, registerBuiltinPlugins } from "@ctxport/core-plugins";
 import { createRoot } from "react-dom/client";
 import App from "~/components/app";
 import {
@@ -11,12 +11,12 @@ import {
 } from "~/constants/extension-runtime";
 
 export default defineContentScript({
-  matches: EXTENSION_CONTENT_MATCHES,
+  matches: EXTENSION_HOST_PERMISSIONS,
   cssInjectionMode: "ui",
 
   async main(ctx) {
-    // Register manifest adapters early so App's first render has access
-    registerBuiltinAdapters();
+    // Register plugins early so App's first render has access
+    registerBuiltinPlugins();
 
     const ui = await createShadowRootUi(ctx, {
       name: CTXPORT_COMPONENT_NAME,

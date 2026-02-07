@@ -1,21 +1,4 @@
-import type { RawMessage } from "../../../base";
 import type { ClaudeMessage } from "./types";
-
-interface GroupedMessage {
-  sender: "human" | "assistant";
-  text: string;
-}
-
-function getSortValue(message: ClaudeMessage): number {
-  if (message.created_at) {
-    const parsed = Date.parse(message.created_at);
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
-  }
-
-  return (message.index ?? 0) * 1000;
-}
 
 function normalizeArtifactToCodeBlock(text: string): string {
   const artifactRegex = /<antArtifact\s+([^>]+)>([\s\S]*?)<\/antArtifact>/gi;
@@ -47,36 +30,4 @@ export function extractClaudeMessageText(message: ClaudeMessage): string {
   }
 
   return normalizeArtifactToCodeBlock(merged);
-}
-
-export function convertClaudeMessagesToRawMessages(
-  messages: ClaudeMessage[],
-): RawMessage[] {
-  const grouped: GroupedMessage[] = [];
-
-  const sorted = [...messages].sort(
-    (left, right) => getSortValue(left) - getSortValue(right),
-  );
-
-  for (const message of sorted) {
-    const text = extractClaudeMessageText(message);
-    if (!text) {
-      continue;
-    }
-
-    const sender = message.sender;
-    const last = grouped[grouped.length - 1];
-
-    if (last?.sender === sender) {
-      last.text = `${last.text}\n${text}`.trim();
-      continue;
-    }
-
-    grouped.push({ sender, text });
-  }
-
-  return grouped.map((item) => ({
-    role: item.sender === "human" ? "user" : "assistant",
-    content: item.text,
-  }));
 }

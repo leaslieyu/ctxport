@@ -1,46 +1,47 @@
 import { describe, it, expect } from "vitest";
 import { serializeConversation, serializeBundle } from "../serializer";
-import type { Conversation } from "@ctxport/core-schema";
+import type { ContentBundle } from "@ctxport/core-schema";
 
-function makeConversation(overrides: Partial<Conversation> = {}): Conversation {
+function makeBundle(overrides: Partial<ContentBundle> = {}): ContentBundle {
   return {
     id: "00000000-0000-0000-0000-000000000001",
-    sourceType: "extension-current",
     title: "Test Conversation",
-    messages: [
+    participants: [
+      { id: "user-1", name: "User", role: "user" },
+      { id: "assistant-1", name: "Assistant", role: "assistant" },
+    ],
+    nodes: [
       {
         id: "00000000-0000-0000-0000-000000000010",
-        role: "user",
-        contentMarkdown: "Hello, how are you?",
+        participantId: "user-1",
+        content: "Hello, how are you?",
         order: 0,
       },
       {
         id: "00000000-0000-0000-0000-000000000011",
-        role: "assistant",
-        contentMarkdown: "I'm doing well! Here's some code:\n\n```python\nprint('hello')\n```",
+        participantId: "assistant-1",
+        content: "I'm doing well! Here's some code:\n\n```python\nprint('hello')\n```",
         order: 1,
       },
     ],
-    sourceMeta: {
-      provider: "chatgpt",
+    source: {
+      platform: "chatgpt",
       url: "https://chatgpt.com/c/abc123",
-      parsedAt: "2026-02-07T14:30:00.000Z",
-      adapterId: "chatgpt-ext",
-      adapterVersion: "1.0.0",
+      extractedAt: "2026-02-07T14:30:00.000Z",
+      pluginId: "chatgpt-ext",
+      pluginVersion: "1.0.0",
     },
-    createdAt: "2026-02-07T14:30:00.000Z",
-    updatedAt: "2026-02-07T14:30:00.000Z",
     ...overrides,
-  } as Conversation;
+  };
 }
 
 describe("serializeConversation", () => {
   it("should serialize with frontmatter by default", () => {
-    const conv = makeConversation();
-    const result = serializeConversation(conv);
+    const bundle = makeBundle();
+    const result = serializeConversation(bundle);
 
     expect(result.markdown).toContain("---");
-    expect(result.markdown).toContain("ctxport: v1");
+    expect(result.markdown).toContain("ctxport: v2");
     expect(result.markdown).toContain("source: chatgpt");
     expect(result.markdown).toContain("title: Test Conversation");
     expect(result.markdown).toContain("## User");
@@ -50,88 +51,99 @@ describe("serializeConversation", () => {
   });
 
   it("should serialize without frontmatter when disabled", () => {
-    const conv = makeConversation();
-    const result = serializeConversation(conv, { includeFrontmatter: false });
+    const bundle = makeBundle();
+    const result = serializeConversation(bundle, { includeFrontmatter: false });
 
     expect(result.markdown).not.toContain("---\nctxport");
     expect(result.markdown).toContain("## User");
   });
 
   it("should handle user-only format", () => {
-    const conv = makeConversation();
-    const result = serializeConversation(conv, { format: "user-only" });
+    const bundle = makeBundle();
+    const result = serializeConversation(bundle, { format: "user-only" });
 
     expect(result.markdown).toContain("## User");
     expect(result.markdown).not.toContain("## Assistant");
   });
 
   it("should handle code-only format", () => {
-    const conv = makeConversation();
-    const result = serializeConversation(conv, { format: "code-only" });
+    const bundle = makeBundle();
+    const result = serializeConversation(bundle, { format: "code-only" });
 
     expect(result.markdown).toContain("```python");
     expect(result.markdown).not.toContain("Hello, how are you?");
   });
 
-  it("should handle empty messages", () => {
-    const conv = makeConversation({ messages: [] });
-    const result = serializeConversation(conv);
+  it("should handle empty nodes", () => {
+    const bundle = makeBundle({ nodes: [] });
+    const result = serializeConversation(bundle);
 
     expect(result.messageCount).toBe(0);
     expect(result.estimatedTokens).toBe(0);
   });
 
   it("should escape title with special characters in frontmatter", () => {
-    const conv = makeConversation({ title: 'Discussing "REST API": auth' });
-    const result = serializeConversation(conv);
+    const bundle = makeBundle({ title: 'Discussing "REST API": auth' });
+    const result = serializeConversation(bundle);
 
     expect(result.markdown).toContain('title: "Discussing \\"REST API\\": auth"');
   });
 
-  it("should handle system role messages", () => {
-    const conv = makeConversation({
-      messages: [
+  it("should handle system role nodes", () => {
+    const bundle = makeBundle({
+      participants: [
+        { id: "system-1", name: "System", role: "system" },
+        { id: "user-1", name: "User", role: "user" },
+      ],
+      nodes: [
         {
           id: "00000000-0000-0000-0000-000000000010",
-          role: "system",
-          contentMarkdown: "You are a helpful assistant.",
+          participantId: "system-1",
+          content: "You are a helpful assistant.",
           order: 0,
         },
         {
           id: "00000000-0000-0000-0000-000000000011",
-          role: "user",
-          contentMarkdown: "Hello",
+          participantId: "user-1",
+          content: "Hello",
           order: 1,
         },
       ],
     });
-    const result = serializeConversation(conv);
+    const result = serializeConversation(bundle);
 
     expect(result.markdown).toContain("## System");
     expect(result.markdown).toContain("## User");
   });
 
-  it("should handle conversation without sourceMeta", () => {
-    const conv = makeConversation({ sourceMeta: undefined });
-    const result = serializeConversation(conv);
+  it("should handle bundle without url in source", () => {
+    const bundle = makeBundle({
+      source: {
+        platform: "chatgpt",
+        extractedAt: "2026-02-07T14:30:00.000Z",
+        pluginId: "chatgpt-ext",
+        pluginVersion: "1.0.0",
+      },
+    });
+    const result = serializeConversation(bundle);
 
-    expect(result.markdown).toContain("ctxport: v1");
-    expect(result.markdown).not.toContain("source:");
+    expect(result.markdown).toContain("ctxport: v2");
+    expect(result.markdown).toContain("source: chatgpt");
     expect(result.markdown).not.toContain("url:");
   });
 
   it("should preserve code blocks with nested backticks", () => {
-    const conv = makeConversation({
-      messages: [
+    const bundle = makeBundle({
+      nodes: [
         {
           id: "00000000-0000-0000-0000-000000000010",
-          role: "assistant",
-          contentMarkdown: "Here is markdown:\n\n````md\n```python\nprint('hi')\n```\n````",
+          participantId: "assistant-1",
+          content: "Here is markdown:\n\n````md\n```python\nprint('hi')\n```\n````",
           order: 0,
         },
       ],
     });
-    const result = serializeConversation(conv);
+    const result = serializeConversation(bundle);
 
     expect(result.markdown).toContain("````md");
     expect(result.markdown).toContain("```python");
@@ -139,21 +151,21 @@ describe("serializeConversation", () => {
 });
 
 describe("serializeBundle", () => {
-  it("should merge multiple conversations", () => {
-    const conv1 = makeConversation({ title: "First Chat" });
-    const conv2 = makeConversation({
+  it("should merge multiple bundles", () => {
+    const bundle1 = makeBundle({ title: "First Chat" });
+    const bundle2 = makeBundle({
       id: "00000000-0000-0000-0000-000000000002",
       title: "Second Chat",
-      sourceMeta: {
-        provider: "claude",
+      source: {
+        platform: "claude",
         url: "https://claude.ai/chat/def456",
-        parsedAt: "2026-02-07T14:30:00.000Z",
-        adapterId: "claude-ext",
-        adapterVersion: "1.0.0",
+        extractedAt: "2026-02-07T14:30:00.000Z",
+        pluginId: "claude-ext",
+        pluginVersion: "1.0.0",
       },
     });
 
-    const result = serializeBundle([conv1, conv2]);
+    const result = serializeBundle([bundle1, bundle2]);
 
     expect(result.markdown).toContain("bundle: merged");
     expect(result.markdown).toContain("conversations: 2");
@@ -163,18 +175,18 @@ describe("serializeBundle", () => {
     expect(result.messageCount).toBe(4);
   });
 
-  it("should handle single conversation bundle", () => {
-    const conv = makeConversation({ title: "Solo Chat" });
-    const result = serializeBundle([conv]);
+  it("should handle single bundle", () => {
+    const bundle = makeBundle({ title: "Solo Chat" });
+    const result = serializeBundle([bundle]);
 
     expect(result.markdown).toContain("bundle: merged");
     expect(result.markdown).toContain("conversations: 1");
     expect(result.markdown).toContain("# [1/1] Solo Chat");
   });
 
-  it("should handle conversations without titles using Untitled", () => {
-    const conv = makeConversation({ title: undefined });
-    const result = serializeBundle([conv]);
+  it("should handle bundles without titles using Untitled", () => {
+    const bundle = makeBundle({ title: undefined });
+    const result = serializeBundle([bundle]);
 
     expect(result.markdown).toContain("# [1/1] Untitled");
   });

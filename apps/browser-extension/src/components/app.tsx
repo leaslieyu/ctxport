@@ -6,32 +6,14 @@ import { ListCopyIcon } from "./list-copy-icon";
 import { Toast, type ToastData } from "./toast";
 import { BatchProvider } from "./batch-mode/batch-provider";
 import { BatchBar } from "./batch-mode/batch-bar";
-import { ManifestInjector } from "~/injectors/manifest-injector";
-import type { PlatformInjector } from "~/injectors/base-injector";
-import { INJECTION_DELAY_MS } from "~/injectors/base-injector";
 import { EXTENSION_WINDOW_EVENT } from "~/constants/extension-runtime";
-import {
-  getRegisteredManifests,
-  type ManifestEntry,
-} from "@ctxport/core-adapters/manifest";
-
-function detectManifest(url: string): ManifestEntry | undefined {
-  return getRegisteredManifests().find((entry) =>
-    entry.manifest.urls.hostPatterns.some((p) => p.test(url)),
-  );
-}
-
-function isConversationPage(url: string): boolean {
-  return getRegisteredManifests().some((entry) =>
-    entry.manifest.urls.conversationUrlPatterns.some((p) => p.test(url)),
-  );
-}
+import { findPlugin, type Plugin } from "@ctxport/core-plugins";
 
 export default function App() {
   const url = useExtensionUrl();
   const [toast, setToast] = useState<ToastData | null>(null);
   const [showFloatingCopy, setShowFloatingCopy] = useState(false);
-  const injectorRef = useRef<PlatformInjector | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   const showToast = useCallback(
     (message: string, type: "success" | "error") => {
@@ -42,55 +24,50 @@ export default function App() {
 
   const dismissToast = useCallback(() => setToast(null), []);
 
-  const entry = detectManifest(url);
-  const onConversationPage = isConversationPage(url);
+  const plugin = findPlugin(url);
 
   useEffect(() => {
     // Clean up previous injector
-    injectorRef.current?.cleanup();
-    injectorRef.current = null;
+    cleanupRef.current?.();
+    cleanupRef.current = null;
     setShowFloatingCopy(false);
 
-    if (!entry) return;
+    if (!plugin) return;
 
-    const injector = new ManifestInjector(entry.manifest);
-    injectorRef.current = injector;
+    if (plugin.injector) {
+      plugin.injector.inject(
+        { url, document },
+        {
+          renderCopyButton: (container) => {
+            const root = createRoot(container);
+            root.render(<CopyButton onToast={showToast} />);
+          },
+          renderListIcon: (container, itemId) => {
+            const root = createRoot(container);
+            root.render(
+              <ListCopyIcon conversationId={itemId} onToast={showToast} />,
+            );
+          },
+          renderBatchCheckbox: (_container, _itemId) => {
+            // Batch checkboxes are handled by BatchProvider
+          },
+          removeBatchCheckboxes: () => {
+            // Handled by injector cleanup
+          },
+        },
+      );
 
-    // Inject copy button in conversation detail header
-    injector.injectCopyButton((container) => {
-      const root = createRoot(container);
-      root.render(<CopyButton onToast={showToast} />);
-    });
-
-    // After injection delay + a buffer, check if the copy button was injected.
-    // If not (e.g., header selectors didn't match), show floating fallback.
-    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
-    if (onConversationPage) {
-      fallbackTimer = setTimeout(() => {
-        const copyBtnClass = `ctxport-${entry.manifest.provider}-copy-btn`;
-        const injected = document.querySelector(`.${copyBtnClass}`);
-        if (!injected) {
-          setShowFloatingCopy(true);
-        }
-      }, INJECTION_DELAY_MS + 500);
+      cleanupRef.current = () => plugin.injector?.cleanup();
+    } else {
+      // No injector — show floating copy button as fallback
+      setShowFloatingCopy(true);
     }
 
-    // Inject copy icons in sidebar list
-    injector.injectListIcons((container, conversationId) => {
-      const root = createRoot(container);
-      root.render(
-        <ListCopyIcon
-          conversationId={conversationId}
-          onToast={showToast}
-        />,
-      );
-    });
-
     return () => {
-      injector.cleanup();
-      if (fallbackTimer) clearTimeout(fallbackTimer);
+      cleanupRef.current?.();
+      cleanupRef.current = null;
     };
-  }, [url, entry, onConversationPage, showToast]);
+  }, [url, plugin, showToast]);
 
   // Listen for keyboard shortcuts via window events
   useEffect(() => {
@@ -130,7 +107,7 @@ export default function App() {
     <BatchProvider>
       <Toast data={toast} onDismiss={dismissToast} />
       <BatchBar onToast={showToast} />
-      {showFloatingCopy && onConversationPage && (
+      {showFloatingCopy && plugin && (
         <FloatingCopyButton onToast={showToast} />
       )}
     </BatchProvider>

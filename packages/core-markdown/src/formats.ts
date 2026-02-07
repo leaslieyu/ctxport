@@ -1,20 +1,25 @@
-import type { Message } from "@ctxport/core-schema";
+import type { ContentNode, Participant } from "@ctxport/core-schema";
 
 export type BundleFormatType = "full" | "user-only" | "code-only" | "compact";
 
-export function filterMessages(
-  messages: Message[],
+export function filterNodes(
+  nodes: ContentNode[],
+  participants: Participant[],
   format: BundleFormatType,
 ): string[] {
+  const participantMap = new Map(participants.map((p) => [p.id, p]));
+  const getRole = (node: ContentNode) =>
+    participantMap.get(node.participantId)?.role ?? "assistant";
+
   switch (format) {
     case "full":
-      return formatFull(messages);
+      return formatFull(nodes, getRole);
     case "user-only":
-      return formatUserOnly(messages);
+      return formatUserOnly(nodes, getRole);
     case "code-only":
-      return formatCodeOnly(messages);
+      return formatCodeOnly(nodes, getRole);
     case "compact":
-      return formatCompact(messages);
+      return formatCompact(nodes, getRole);
   }
 }
 
@@ -24,46 +29,58 @@ function roleLabel(role: string): string {
   return "Assistant";
 }
 
-function formatFull(messages: Message[]): string[] {
+function formatFull(
+  nodes: ContentNode[],
+  getRole: (node: ContentNode) => string,
+): string[] {
   const parts: string[] = [];
 
-  for (const msg of messages) {
-    parts.push(`## ${roleLabel(msg.role)}\n\n${msg.contentMarkdown}`);
+  for (const node of nodes) {
+    parts.push(`## ${roleLabel(getRole(node))}\n\n${node.content}`);
   }
 
   return parts;
 }
 
-function formatUserOnly(messages: Message[]): string[] {
+function formatUserOnly(
+  nodes: ContentNode[],
+  getRole: (node: ContentNode) => string,
+): string[] {
   const parts: string[] = [];
 
-  for (const msg of messages) {
-    if (msg.role !== "user") continue;
-    parts.push(`## User\n\n${msg.contentMarkdown}`);
+  for (const node of nodes) {
+    if (getRole(node) !== "user") continue;
+    parts.push(`## User\n\n${node.content}`);
   }
 
   return parts;
 }
 
-function formatCodeOnly(messages: Message[]): string[] {
+function formatCodeOnly(
+  nodes: ContentNode[],
+  getRole: (node: ContentNode) => string,
+): string[] {
   const codeBlockRegex = /```[\s\S]*?```/g;
   const parts: string[] = [];
 
-  for (const msg of messages) {
-    const matches = msg.contentMarkdown.match(codeBlockRegex);
+  for (const node of nodes) {
+    const matches = node.content.match(codeBlockRegex);
     if (matches) {
-      parts.push(`## ${roleLabel(msg.role)}\n\n${matches.join("\n\n")}`);
+      parts.push(`## ${roleLabel(getRole(node))}\n\n${matches.join("\n\n")}`);
     }
   }
 
   return parts;
 }
 
-function formatCompact(messages: Message[]): string[] {
+function formatCompact(
+  nodes: ContentNode[],
+  getRole: (node: ContentNode) => string,
+): string[] {
   const parts: string[] = [];
 
-  for (const msg of messages) {
-    let content = msg.contentMarkdown;
+  for (const node of nodes) {
+    let content = node.content;
 
     // Remove comments inside code blocks
     content = content.replace(
@@ -90,7 +107,7 @@ function formatCompact(messages: Message[]): string[] {
     // Collapse multiple blank lines to single
     content = content.replace(/\n{3,}/g, "\n\n");
 
-    parts.push(`## ${roleLabel(msg.role)}\n\n${content}`);
+    parts.push(`## ${roleLabel(getRole(node))}\n\n${content}`);
   }
 
   return parts;
