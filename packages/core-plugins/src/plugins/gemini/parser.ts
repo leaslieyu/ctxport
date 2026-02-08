@@ -1,8 +1,7 @@
 import { createAppError } from "@ctxport/core-schema";
 import type { GeminiRuntimeParams } from "./types";
 
-const BATCH_EXECUTE_ENDPOINT =
-  "https://gemini.google.com/_/BardChatUi/data/batchexecute";
+const BATCH_EXECUTE_BASE = "https://gemini.google.com";
 
 const GEMINI_IMAGE_URL_PATTERN =
   /^https:\/\/lh3\.googleusercontent\.com\/gg(?:-dl)?\//;
@@ -12,12 +11,13 @@ const GEMINI_IMAGE_URL_PATTERN =
 export async function fetchConversationPayload(
   conversationId: string,
   runtimeParams: GeminiRuntimeParams,
+  pathPrefix = "",
 ): Promise<unknown> {
   const rpcId = "hNvQHb";
 
   const query = new URLSearchParams({
     rpcids: rpcId,
-    "source-path": `/app/${conversationId}`,
+    "source-path": `${pathPrefix}/app/${conversationId}`,
     bl: runtimeParams.bl,
     "f.sid": runtimeParams.fSid,
     hl: runtimeParams.hl,
@@ -29,16 +29,7 @@ export async function fetchConversationPayload(
     [
       [
         rpcId,
-        JSON.stringify([
-          `c_${conversationId}`,
-          100,
-          null,
-          1,
-          [0],
-          [4],
-          null,
-          1,
-        ]),
+        JSON.stringify([`c_${conversationId}`, 10, null, 1, [0], [4], null, 1]),
         null,
         "generic",
       ],
@@ -49,24 +40,22 @@ export async function fetchConversationPayload(
     body.set("at", runtimeParams.at);
   }
 
-  const response = await fetch(
-    `${BATCH_EXECUTE_ENDPOINT}?${query.toString()}`,
-    {
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
-      cache: "no-store",
-      referrer: `https://gemini.google.com/app/${conversationId}`,
-      referrerPolicy: "strict-origin-when-cross-origin",
-      headers: {
-        Accept: "*/*",
-        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
-        Origin: "https://gemini.google.com",
-        "X-Same-Domain": "1",
-      },
-      body: body.toString(),
+  const endpoint = `${BATCH_EXECUTE_BASE}${pathPrefix}/_/BardChatUi/data/batchexecute`;
+  const response = await fetch(`${endpoint}?${query.toString()}`, {
+    method: "POST",
+    mode: "cors",
+    credentials: "include",
+    cache: "no-store",
+    referrer: `https://gemini.google.com${pathPrefix}/app/${conversationId}`,
+    referrerPolicy: "strict-origin-when-cross-origin",
+    headers: {
+      Accept: "*/*",
+      "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+      Origin: "https://gemini.google.com",
+      "X-Same-Domain": "1",
     },
-  );
+    body: body.toString(),
+  });
 
   if (!response.ok) {
     throw createAppError(
