@@ -27,21 +27,25 @@ export const geminiPlugin: Plugin = {
       throw createAppError("E-PARSE-001", "Not a Gemini conversation page");
     }
 
+    const pathPrefix = extractPathPrefix(ctx.url);
     const runtimeParams = await resolveRuntimeParams(ctx.document);
     const payload = await fetchConversationPayload(
       conversationId,
       runtimeParams,
+      pathPrefix,
     );
     return buildContentBundle(payload, ctx.url);
   },
 
   async fetchById(conversationId: string): Promise<ContentBundle> {
+    const pathPrefix = extractPathPrefix(document.location.href);
     const runtimeParams = await resolveRuntimeParams(document);
     const payload = await fetchConversationPayload(
       conversationId,
       runtimeParams,
+      pathPrefix,
     );
-    const url = `https://gemini.google.com/app/${conversationId}`;
+    const url = `https://gemini.google.com${pathPrefix}/app/${conversationId}`;
     return buildContentBundle(payload, url);
   },
 
@@ -79,6 +83,11 @@ export const geminiPlugin: Plugin = {
 function extractConversationId(url: string): string | null {
   const match = CONVERSATION_PATTERN.exec(url);
   return match?.[1] ?? null;
+}
+
+function extractPathPrefix(url: string): string {
+  const match = /^https?:\/\/gemini\.google\.com\/(u\/\d+)\//.exec(url);
+  return match ? `/${match[1]}` : "";
 }
 
 async function resolveRuntimeParams(
