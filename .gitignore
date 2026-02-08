@@ -133,6 +133,7 @@ logs/
 **/.vitepress/cache
 **/.vitepress/.temp
 **.tmp.md
+product-materials
 
 # for codex
 tasks
